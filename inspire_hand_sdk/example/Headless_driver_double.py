@@ -18,25 +18,27 @@ def worker(ip,LR,name,network=None):
             if call_count % 10 == 0:
                 elapsed_time = time.perf_counter() - start_time
                 frequency = call_count / elapsed_time
-                print(f"{name} 当前频率: {frequency:.2f} Hz, 调用次数: {call_count}, 耗时: {elapsed_time:.6f} 秒")
+                print(f"{name} Current frequency: {frequency:.2f} Hz, Call count: {call_count}, Elapsed time: {elapsed_time:.6f} s")
     except KeyboardInterrupt:
         elapsed_time = time.perf_counter() - start_time
         frequency = call_count / elapsed_time if elapsed_time > 0 else 0
-        print(f"{name} 程序结束. 总调用次数: {call_count}, 总耗时: {elapsed_time:.6f} 秒, 最终频率: {frequency:.2f} Hz")
+        print(f"{name} Program ended. Total calls: {call_count}, Total time: {elapsed_time:.6f} s, Final frequency: {frequency:.2f} Hz")
 
 if __name__ == "__main__":
-    # 使用默认IP地址的示例
-
-    process_r = multiprocessing.Process(target=worker, args=('192.168.123.211','r',"右手进程"))
-    process_l = multiprocessing.Process(target=worker, args=('192.168.123.210','l',"左手进程"))
+    # Example using default IP address
+    # Specify network interface for DDS (use 'lo' for localhost or your interface name)
+    network_interface = "lo"  # Use loopback for local DDS communication
+    
+    process_r = multiprocessing.Process(target=worker, args=('192.168.123.211','r',"Right hand process", network_interface))
+    #process_l = multiprocessing.Process(target=worker, args=('192.168.123.210','l',"Left hand process", network_interface))
 
     process_r.start()
     time.sleep(0.6)
-    process_l.start()
+    #process_l.start()
 
     try:
         while True:
             time.sleep(10)
     except KeyboardInterrupt:
         process_r.terminate()
-        process_l.terminate()
+        #process_l.terminate()

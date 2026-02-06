@@ -65,24 +65,24 @@ class ModbusDataHandlerDouble:
             else:
                 self.client = ModbusTcpClient(ip, port=port)
                 
-        # 尝试连接 Modbus 服务器，带重试机制
+        # Try to connect to Modbus server with retry mechanism
         self.connect_to_modbus(max_retries, retry_delay)     
         self.device_id = device_id
-       # 初始化 ChannelFactory
+       # Initialize ChannelFactory
         try:
             if initDDS:
-                if network is None:
+                if network is not None:
                     ChannelFactoryInitialize(0, network)
                 else:
                     ChannelFactoryInitialize(0)
                 
         except Exception as e:
             print(f"Error during ChannelFactory initialization: {e}")
-            # 这里可以添加日志记录或其他恢复机制
+            # Can add logging or other recovery mechanisms here
             return
         
-        self.client.write_register(1004,1,self.device_id[0]) #reser error
-        self.client.write_register(1004,1,self.device_id[1]) #reser error
+        self.client.write_register(1004,1,self.device_id[0]) # Reset error
+        self.client.write_register(1004,1,self.device_id[1]) # Reset error
 
         if not self.use_serial:
             self.pub = ChannelPublisher("rt/inspire_hand/touch/l", inspire_hand_touch)
@@ -104,7 +104,7 @@ class ModbusDataHandlerDouble:
         self.sub.Init(self.write_registers_callback, 10)           
                    
     def connect_to_modbus(self, max_retries, retry_delay):
-        """连接到 Modbus 服务器，并在失败时重试"""
+        """Connect to Modbus server with retry on failure"""
         retries = 0
         while retries < max_retries:
             try:
@@ -123,24 +123,24 @@ class ModbusDataHandlerDouble:
                     raise   
     def write_registers_callback(self,msg:inspire_hand_ctrl):
         with modbus_lock:
-            if msg.mode & 0b0001:  # 模式 1 - 角度
+            if msg.mode & 0b0001:  # Mode 1 - Angle
                 self.client.write_registers(1486, msg.angle_set, self.device_id[0])
                 self.client.write_registers(1486, msg.angle_set, self.device_id[1])
 
                 # print('angle_set')
-            if msg.mode & 0b0010:  # 模式 2 - 位置
+            if msg.mode & 0b0010:  # Mode 2 - Position
                 self.client.write_registers(1474, msg.pos_set, self.device_id[0])
                 self.client.write_registers(1474, msg.pos_set, self.device_id[1])
 
                 # print('pos_set')
 
-            if msg.mode & 0b0100:  # 模式 4 - 力控
+            if msg.mode & 0b0100:  # Mode 4 - Force control
                 self.client.write_registers(1498, msg.force_set, self.device_id[0])
                 self.client.write_registers(1498, msg.force_set, self.device_id[1])
 
                 # print('force_set')
 
-            if msg.mode & 0b1000:  # 模式 8 - 速度
+            if msg.mode & 0b1000:  # Mode 8 - Speed
                 self.client.write_registers(1522, msg.speed_set, self.device_id[0])
                 self.client.write_registers(1522, msg.speed_set, self.device_id[1])
 
@@ -205,22 +205,22 @@ class ModbusDataHandlerDouble:
 
     def read_and_parse_registers(self, start_address, num_registers, data_type='short',device_id=1):
          with modbus_lock:
-            # 读取寄存器
+            # Read registers
             response = self.client.read_holding_registers(start_address, num_registers, device_id)
 
             if not response.isError():
                 if data_type == 'short':
-                    # 将读取的寄存器打包为二进制数据
+                    # Pack the read registers as binary data
                     packed_data = struct.pack('>' + 'H' * num_registers, *response.registers)
-                    # 将寄存器解包为带符号的 16 位整数 (short)
+                    # Unpack registers as signed 16-bit integers (short)
                     angles = struct.unpack('>' + 'h' * num_registers, packed_data)
                     return angles
                 elif data_type == 'byte':
-                    # 将每个 16 位寄存器拆分为两个 8 位 (uint8) 数据
+                    # Split each 16-bit register into two 8-bit (uint8) values
                     byte_list = []
                     for reg in response.registers:
-                        high_byte = (reg >> 8) & 0xFF  # 高 8 位
-                        low_byte = reg & 0xFF          # 低 8 位
+                        high_byte = (reg >> 8) & 0xFF  # High 8 bits
+                        low_byte = reg & 0xFF          # Low 8 bits
                         byte_list.append(high_byte)
                         byte_list.append(low_byte)
                     return byte_list

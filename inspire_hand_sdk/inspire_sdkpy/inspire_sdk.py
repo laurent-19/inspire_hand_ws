@@ -75,7 +75,7 @@ class ModbusDataHandler:
        # 初始化 ChannelFactory
         try:
             if initDDS:
-                if network is None:
+                if network is not None:
                     ChannelFactoryInitialize(0, network)
                 else:
                     ChannelFactoryInitialize(0)
@@ -114,15 +114,16 @@ class ModbusDataHandler:
                     print("Max retries reached. Could not connect.")
                     raise   
     def write_registers_callback(self,msg:inspire_hand_ctrl):
+        print(f"[DDS] Received ctrl message: mode={msg.mode}, angle_set={msg.angle_set}")
         with modbus_lock:
-            if msg.mode & 0b0001:  # 模式 1 - 角度
-                self.client.write_registers(1486, msg.angle_set, self.device_id)
-                # print('angle_set')
-            if msg.mode & 0b0010:  # 模式 2 - 位置
+            if msg.mode & 0b0001:  # Mode 1 - Angle
+                result = self.client.write_registers(1486, msg.angle_set, self.device_id)
+                print(f"[Modbus] Write angle_set result: {result}")
+            if msg.mode & 0b0010:  # Mode 2 - Position
                 self.client.write_registers(1474, msg.pos_set, self.device_id)
                 # print('pos_set')
 
-            if msg.mode & 0b0100:  # 模式 4 - 力控
+            if msg.mode & 0b0100:  # Mode 4 - Force control
                 self.client.write_registers(1498, msg.force_set, self.device_id)
                 # print('force_set')
 
