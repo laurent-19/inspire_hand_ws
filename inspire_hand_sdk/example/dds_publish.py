@@ -12,10 +12,10 @@ if __name__ == '__main__':
     # Use loopback interface for local DDS communication
     network_interface = "lo"
     
-    if len(sys.argv)>1:
-        ChannelFactoryInitialize(0, sys.argv[1])
-    else:
-        ChannelFactoryInitialize(0, network_interface)
+    # Domain 1 for simulation, domain 0 for local testing
+    domain = 1 if len(sys.argv) > 1 else 0
+    interface = sys.argv[1] if len(sys.argv) > 1 else network_interface
+    ChannelFactoryInitialize(domain, interface)
     # Create a publisher to publish the data defined in UserData class
     pubr = ChannelPublisher("rt/inspire_hand/ctrl/r", inspire_dds.inspire_hand_ctrl)
     pubr.Init()
@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     time.sleep(3.0)
 
-    for cnd in range(100000): 
+    for cnd in range(1000000): 
 
             # Register start address, 0x05CE corresponds to 1486
         start_address = 1486            
@@ -79,11 +79,9 @@ if __name__ == '__main__':
         # mode 15: 1111 (angle + position + force control + speed)  
         cmd.angle_set=value_to_write_np.tolist()
         cmd.mode=0b0001
-        #Publish message
-        #if  publ.Write(cmd) and pubr.Write(cmd):
-        #    print("Publish success. angle_set:", cmd.angle_set)
-        #else:
-        #    print("Waiting for subscriber.")
+        # Publish message
+        publ.Write(cmd)
+        pubr.Write(cmd)
 
         time.sleep(0.1)
         

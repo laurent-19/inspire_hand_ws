@@ -11,22 +11,21 @@ import threading
 
 class DDSHandler():
    
-    def __init__(self,network=None,sub_touch=True,LR='r'):
+    def __init__(self,network=None,sub_touch=True,LR='r',domain=0):
         super().__init__()  # Call parent class __init__ method
 
         network_interface = "lo"  # Use loopback for local DDS communication
 
         if network is not None:
-            ChannelFactoryInitialize(0, network)
+            ChannelFactoryInitialize(domain, network)
         else:
-            ChannelFactoryInitialize(0, network_interface)
+            ChannelFactoryInitialize(domain, network_interface)
+
+        # Initialize locks and data BEFORE starting subscribers to avoid race condition
+        self.data_touch_lock = threading.Lock()
+        self.data_state_lock = threading.Lock()
+
         self.data=inspire_hand_defaut.data_sheet
-        if sub_touch:
-            self.sub_touch = ChannelSubscriber("rt/inspire_hand/touch/"+LR, inspire_dds.inspire_hand_touch)
-            self.sub_touch.Init(self.update_data_touch, 10)
-        
-        self.sub_states = ChannelSubscriber("rt/inspire_hand/state/"+LR, inspire_dds.inspire_hand_state)
-        self.sub_states.Init(self.update_data_state, 10)
         # Initialize touch with default values to prevent KeyError before first message
         self.touch = {}
         for name, addr, length, size, var in self.data:
@@ -41,8 +40,14 @@ class DDSHandler():
             'STATUS': [0] * 6,
             'TEMP': [0] * 6
         }
-        self.data_touch_lock = threading.Lock()
-        self.data_state_lock = threading.Lock()
+
+        # Now start subscribers after data structures are ready
+        if sub_touch:
+            self.sub_touch = ChannelSubscriber("rt/inspire_hand/touch/"+LR, inspire_dds.inspire_hand_touch)
+            self.sub_touch.Init(self.update_data_touch, 10)
+
+        self.sub_states = ChannelSubscriber("rt/inspire_hand/state/"+LR, inspire_dds.inspire_hand_state)
+        self.sub_states.Init(self.update_data_state, 10)
 
     # Function to update graphics
     def update_data_touch(self,msg:inspire_dds.inspire_hand_touch):
@@ -82,9 +87,15 @@ from inspire_sdkpy import qt_tabs,inspire_sdk,inspire_hand_defaut
 if __name__ == "__main__":
     # Allow Ctrl+C to terminate the application
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    
-    ddsHandler = DDSHandler(LR='r')
-    # ddsHandler = DDSHandler(LR='l')
+
+    # Usage: python dds_subscribe.py [interface] [l/r]
+    # For simulation: python dds_subscribe.py enp0s31f6 r
+    # For local test:  python dds_subscribe.py
+    network = sys.argv[1] if len(sys.argv) > 1 else None
+    lr = sys.argv[2] if len(sys.argv) > 2 else 'r'
+    domain = 1 if network else 0
+
+    ddsHandler = DDSHandler(network=network, LR=lr, domain=domain)
 
     app = qt_tabs.QApplication(sys.argv)
     window = qt_tabs.MainWindow(data_handler=ddsHandler,dt=55,name="DDS Subscribe") # Update every 50 ms
