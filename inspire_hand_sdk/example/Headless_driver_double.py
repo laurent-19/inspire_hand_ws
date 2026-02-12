@@ -1,5 +1,6 @@
 import multiprocessing
 import time
+import sys
 from inspire_sdkpy import inspire_sdk, inspire_hand_defaut
 
 def worker(ip,LR,name,network=None):
@@ -25,9 +26,15 @@ def worker(ip,LR,name,network=None):
         print(f"{name} Program ended. Total calls: {call_count}, Total time: {elapsed_time:.6f} s, Final frequency: {frequency:.2f} Hz")
 
 if __name__ == "__main__":
-    # Example using default IP address
-    # Specify network interface for DDS (use 'lo' for localhost or your interface name)
-    network_interface = "lo"  # Use loopback for local DDS communication
+    # Usage: python Headless_driver_double.py [interface] [domain]
+    # For default: python Headless_driver_double.py
+    # Custom settings: python Headless_driver_double.py enp0s31f6 0
+    
+    hand_ip = '192.168.123.211'
+    network_interface = sys.argv[1] if len(sys.argv) > 1 else "enp0s31f6"
+    domain = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+    
+    print(f"Starting Headless Driver: hand_ip={hand_ip}, interface={network_interface}, domain={domain}")
     
     process_r = multiprocessing.Process(target=worker, args=('192.168.123.211','r',"Right hand process", network_interface))
     #process_l = multiprocessing.Process(target=worker, args=('192.168.123.210','l',"Left hand process", network_interface))

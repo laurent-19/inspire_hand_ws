@@ -9,27 +9,37 @@ from inspire_sdkpy import inspire_hand_defaut,inspire_dds
 import numpy as np
 
 if __name__ == '__main__':
-    # Use loopback interface for local DDS communication
-    network_interface = "lo"
+    # Usage: python dds_publish.py [interface] [domain]
+    # For network: python dds_publish.py enp0s31f6 0
+    # For local test: python dds_publish.py
+    network_interface = "enp0s31f6"
     
-    # Domain 1 for simulation, domain 0 for local testing
-    domain = 1 if len(sys.argv) > 1 else 0
     interface = sys.argv[1] if len(sys.argv) > 1 else network_interface
+    domain = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+    
+    print(f"Initializing DDS with domain={domain}, interface={interface}")
     ChannelFactoryInitialize(domain, interface)
+    print("DDS initialized successfully")
     # Create a publisher to publish the data defined in UserData class
+    print("Creating publishers...")
     pubr = ChannelPublisher("rt/inspire_hand/ctrl/r", inspire_dds.inspire_hand_ctrl)
     pubr.Init()
+    print("Right hand publisher initialized")
     
     publ = ChannelPublisher("rt/inspire_hand/ctrl/l", inspire_dds.inspire_hand_ctrl)
     publ.Init()
+    print("Left hand publisher initialized")
+    
     cmd = inspire_hand_defaut.get_inspire_hand_ctrl()
     short_value=1000
 
 
+    print("Sending initial commands...")
     cmd.angle_set=[1000,1000,1000,1000,1000,1000]
     cmd.mode=0b0001
     publ.Write(cmd)
     pubr.Write(cmd)
+    print(f"Initial command sent: angle_set={cmd.angle_set}")
 
     time.sleep(1.0)
 
@@ -37,9 +47,11 @@ if __name__ == '__main__':
     cmd.mode=0b0001
     publ.Write(cmd)
     pubr.Write(cmd)
+    print("Second initial command sent")
 
     time.sleep(3.0)
 
+    print("Starting control loop...")
     for cnd in range(1000000): 
 
             # Register start address, 0x05CE corresponds to 1486
@@ -82,6 +94,9 @@ if __name__ == '__main__':
         # Publish message
         publ.Write(cmd)
         pubr.Write(cmd)
+        
+        if cnd % 10 == 0:
+            print(f"Loop {cnd}: angle_set={cmd.angle_set}, short_value={short_value}")
 
         time.sleep(0.1)
         

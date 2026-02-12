@@ -14,7 +14,7 @@ class DDSHandler():
     def __init__(self,network=None,sub_touch=True,LR='r',domain=0):
         super().__init__()  # Call parent class __init__ method
 
-        network_interface = "lo"  # Use loopback for local DDS communication
+        network_interface = "enp0s31f6"  # Use host network interface for DDS communication
 
         if network is not None:
             ChannelFactoryInitialize(domain, network)
@@ -88,12 +88,12 @@ if __name__ == "__main__":
     # Allow Ctrl+C to terminate the application
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    # Usage: python dds_subscribe.py [interface] [l/r]
-    # For simulation: python dds_subscribe.py enp0s31f6 r
+    # Usage: python dds_subscribe.py [interface] [l/r] [domain]
+    # For network: python dds_subscribe.py enp0s31f6 r 0
     # For local test:  python dds_subscribe.py
     network = sys.argv[1] if len(sys.argv) > 1 else None
     lr = sys.argv[2] if len(sys.argv) > 2 else 'r'
-    domain = 1 if network else 0
+    domain = int(sys.argv[3]) if len(sys.argv) > 3 else 0
 
     ddsHandler = DDSHandler(network=network, LR=lr, domain=domain)
 

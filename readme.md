@@ -64,27 +64,65 @@ The Inspire Hand SDK supports multiple control modes, defined as follows:
 - **Mode 14**: `1110` (Position + Force control + Velocity)
 - **Mode 15**: `1111` (Angle + Position + Force control + Velocity)
 
+## Network Configuration
+
+All DDS scripts use consistent default settings:
+- **Default Network Interface**: `enp0s31f6` (adjust to match your network interface)
+- **Default DDS Domain**: `0` (all components must use the same domain to communicate)
+- **Default Hand IP**: `192.168.123.211` (for Headless_driver)
+
+To find your network interface, run: `ip addr` or `ifconfig`
+
 ## Usage Examples
 
 Below are instructions for using common examples:
 
-1. **DDS Control Command Publisher**:
+### Step 1: Start the Headless Driver (required for DDS communication)
 
-    Run the following script to publish control commands:
-    ```bash
-    python inspire_hand_sdk/example/dds_publish.py
-    ```
+The Headless Driver bridges the Inspire Hand's ModbusTCP connection to DDS:
 
-2. **DDS Subscriber for Inspire Hand Status and Tactile Sensor Data with Visualization**:
+```bash
+# Default settings (hand IP: 192.168.123.211, interface: enp0s31f6, domain: 0)
+python inspire_hand_sdk/example/Headless_driver_double.py
 
-    Run the following script to subscribe to the Inspire Hand status and sensor data, and visualize the results:
-    ```bash
-    python inspire_hand_sdk/example/dds_subscribe.py
-    ```
+# Custom settings
+python inspire_hand_sdk/example/Headless_driver_double.py [interface] [domain]
+# Example: python inspire_hand_sdk/example/Headless_driver_double.py enp0s31f6 0
+```
 
-3. **Inspire Hand DDS Driver (Headless Mode)**:
+### Step 2: Publish Control Commands
 
-    Use the following script for the headless mode driver:
+Publish control commands to the Inspire Hand via DDS:
+
+```bash
+# Default settings (interface: enp0s31f6, domain: 0)
+python inspire_hand_sdk/example/dds_publish.py
+
+# Custom settings
+python inspire_hand_sdk/example/dds_publish.py [interface] [domain]
+# Example: python inspire_hand_sdk/example/dds_publish.py enp0s31f6 0
+```
+
+### Step 3: Subscribe to Hand State and Sensor Data
+
+Visualize the Inspire Hand status and tactile sensor data:
+
+```bash
+# Default settings (interface: enp0s31f6, domain: 0, hand: right)
+python inspire_hand_sdk/example/dds_subscribe.py
+
+# Custom settings
+python inspire_hand_sdk/example/dds_subscribe.py [interface] [l/r] [domain]
+# Example: python inspire_hand_sdk/example/dds_subscribe.py enp0s31f6 r 0
+```
+
+---
+
+## Additional Tools
+
+3. **Inspire Hand DDS Driver (Legacy - Single Hand)**:
+
+    Use the following script for the single-hand headless mode driver:
     ```bash
     python inspire_hand_sdk/example/Headless_driver.py
     ```
