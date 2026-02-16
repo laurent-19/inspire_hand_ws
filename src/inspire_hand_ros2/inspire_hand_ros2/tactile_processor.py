@@ -40,7 +40,9 @@ class TactileProcessor:
                  contact_threshold: float = 500.0,
                  derivative_threshold: float = 100.0,
                  slip_threshold: float = 0.12,
-                 min_contact_for_slip: float = 200.0):
+                 min_contact_for_slip: float = 200.0,
+                 force_stability_threshold: float = 500.0,
+                 min_derivative_for_slip: float = 50000.0):
         """
         Initialize tactile processor.
 
@@ -50,6 +52,7 @@ class TactileProcessor:
             derivative_threshold: Derivative threshold for contact detection
             slip_threshold: Weber's law threshold (0.12 = 12%)
             min_contact_for_slip: Minimum contact to consider slip
+            force_stability_threshold: Band-pass force threshold to prevent feedback loop
         """
         self.sample_rate = sample_rate
         self.dt = 1.0 / sample_rate
@@ -59,6 +62,8 @@ class TactileProcessor:
         self.derivative_threshold = derivative_threshold
         self.slip_threshold = slip_threshold
         self.min_contact_for_slip = min_contact_for_slip
+        self.force_stability_threshold = force_stability_threshold
+        self.min_derivative_for_slip = min_derivative_for_slip  # Absolute minimum derivative
 
         # State for derivative computation
         self.prev_finger_force = [0.0] * 6
@@ -68,6 +73,15 @@ class TactileProcessor:
         # Cutoff frequency ~5Hz for FA-I signal
         self.alpha = 2 * math.pi * 5.0 * self.dt / (2 * math.pi * 5.0 * self.dt + 1)
         self.filtered_force = [0.0] * 6
+
+        # Band-pass filter state (1-5 Hz) for force stability check
+        # This prevents feedback loop when force is being adjusted
+        # High-pass at 1Hz removes DC, low-pass at 5Hz removes slip effects
+        self.alpha_hp_1hz = 2 * math.pi * 1.0 * self.dt / (2 * math.pi * 1.0 * self.dt + 1)
+        self.alpha_lp_5hz = 2 * math.pi * 5.0 * self.dt / (2 * math.pi * 5.0 * self.dt + 1)
+        self.hp_1hz_state = [0.0] * 6
+        self.lp_5hz_state = [0.0] * 6
+        self.bandpass_force = [0.0] * 6
 
     def compute_finger_force(self, tactile: dict) -> List[float]:
         """
@@ -125,6 +139,14 @@ class TactileProcessor:
             self.filtered_force[i] = self.alpha * d + (1 - self.alpha) * self.filtered_force[i]
             derivative.append(self.filtered_force[i])
 
+            # Also compute band-pass filtered force (1-5 Hz) for stability check
+            # High-pass at 1Hz (remove DC/mean)
+            hp_out = self.alpha_hp_1hz * (curr - self.hp_1hz_state[i])
+            self.hp_1hz_state[i] = curr
+            # Low-pass at 5Hz (smooth out high freq)
+            self.lp_5hz_state[i] = self.alpha_lp_5hz * hp_out + (1 - self.alpha_lp_5hz) * self.lp_5hz_state[i]
+            self.bandpass_force[i] = self.lp_5hz_state[i]
+
         self.prev_finger_force = current.copy()
         return derivative
 
@@ -152,13 +174,16 @@ class TactileProcessor:
     def detect_slip(self, finger_force: List[float],
                     finger_derivative: List[float]) -> List[bool]:
         """
-        Detect slip using Weber's Law.
+        Detect slip using Weber's Law with force stability check.
 
-        Slip is detected when the rate of change exceeds a percentage
-        of the current force level. This matches human perception
-        where relative changes are more important than absolute values.
+        From Romano et al. (IEEE TRO 2011), slip has TWO conditions:
+        1. |F'g| > Fg * SLIPTHRESH (Weber's law - force disturbance)
+        2. F^BP_g < FBPTHRESH (force stability - prevents feedback loop)
 
-        From Romano et al.: slip_threshold ~0.12 (12%)
+        The second condition is CRITICAL: it prevents detecting "slip"
+        when we're actively adjusting grip force. Without this, increasing
+        force causes tactile changes, which triggers more slip detection,
+        creating a runaway feedback loop.
 
         Args:
             finger_force: SA-I signal (tactile sums)
@@ -167,12 +192,41 @@ class TactileProcessor:
         Returns:
             List of slip booleans per finger
         """
-        return [
-            # Must be in contact and derivative > percentage of current force
-            (force > self.min_contact_for_slip) and
-            (abs(deriv) > force * self.slip_threshold)
-            for force, deriv in zip(finger_force, finger_derivative)
-        ]
+        slips = []
+        any_slip = False
+        for i, (force, deriv) in enumerate(zip(finger_force, finger_derivative)):
+            # Condition 1: Must be in contact and derivative exceeds Weber threshold
+            in_contact = force > self.min_contact_for_slip
+            weber_thresh = force * self.slip_threshold
+            weber_exceeded = abs(deriv) > weber_thresh
+            weber_condition = in_contact and weber_exceeded
+
+            # Condition 2: Force must be stable (not actively changing)
+            # If band-pass filtered force is high, we're adjusting grip -> ignore slip
+            bp_force = abs(self.bandpass_force[i])
+            force_stable = bp_force < self.force_stability_threshold
+
+            # Condition 3: Derivative must exceed absolute minimum
+            # Inspire Hand tactile has high sensitivity, need minimum threshold
+            # to filter out normal sensor noise during stable grasp
+            deriv_above_min = abs(deriv) > self.min_derivative_for_slip
+
+            # All conditions must be true for slip detection
+            slip = weber_condition and force_stable and deriv_above_min
+            slips.append(slip)
+            if slip:
+                any_slip = True
+
+        # Debug output when slip detected
+        if any_slip:
+            print(f"\n[SLIP DEBUG] slip_thresh={self.slip_threshold:.2f}, min_deriv={self.min_derivative_for_slip:.0f}")
+            for i, (force, deriv) in enumerate(zip(finger_force, finger_derivative)):
+                if slips[i]:
+                    weber_thresh = force * self.slip_threshold
+                    print(f"  Finger {i}: force={force:.0f}, |deriv|={abs(deriv):.0f}, "
+                          f"weber_thresh={weber_thresh:.0f}, SLIP=True")
+
+        return slips
 
     def process(self, tactile: dict) -> TactileSignals:
         """
@@ -212,6 +266,9 @@ class TactileProcessor:
         self.prev_finger_force = [0.0] * 6
         self.prev_palm_force = 0.0
         self.filtered_force = [0.0] * 6
+        self.hp_1hz_state = [0.0] * 6
+        self.lp_5hz_state = [0.0] * 6
+        self.bandpass_force = [0.0] * 6
 
     def get_contact_count(self, contacts: List[bool]) -> int:
         """Count number of fingers in contact."""

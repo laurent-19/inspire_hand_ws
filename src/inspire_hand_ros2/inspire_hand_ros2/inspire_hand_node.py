@@ -365,8 +365,8 @@ class InspireHandNode(Node):
         self.driver.open_hand()
         return CancelResponse.ACCEPT
 
-    async def grasp_action_execute(self, goal_handle):
-        """Execute grasp action with feedback."""
+    def grasp_action_execute(self, goal_handle):
+        """Execute grasp action with feedback and continuous slip monitoring."""
         self.get_logger().info(f'Executing grasp: {goal_handle.request.grasp_type}')
 
         request = goal_handle.request
@@ -386,17 +386,31 @@ class InspireHandNode(Node):
                 custom_angles=custom_angles
             )
 
+            # Enable/disable slip compensation
+            self.grasp_controller.slip_compensation_enabled = request.use_slip_compensation
+
+            # Set slip threshold if provided (0 means use default 0.12)
+            if request.slip_threshold > 0:
+                self.grasp_controller.tactile.slip_threshold = request.slip_threshold
+            else:
+                self.grasp_controller.tactile.slip_threshold = 0.12  # Default 12%
+
             self.driver.write_control(angles, forces, speeds)
 
             # Monitor and send feedback
-            timeout = request.timeout if request.timeout > 0 else 10.0
+            # If timeout is 0, use a long default for continuous monitoring
+            timeout = request.timeout if request.timeout > 0 else 60.0
             start_time = time.time()
+            holding_logged = False
 
-            while not self.grasp_controller.is_complete():
+            # Keep running until timeout or cancellation
+            # This allows continuous slip monitoring while holding
+            while True:
                 # Check for cancellation
                 if goal_handle.is_cancel_requested:
                     self.grasp_controller.abort()
-                    self.driver.open_hand()
+                    angles, forces, speeds = self.grasp_controller.release()
+                    self.driver.write_control(angles, forces, speeds)
                     goal_handle.canceled()
                     result.success = False
                     result.message = 'Cancelled'
@@ -413,8 +427,17 @@ class InspireHandNode(Node):
 
                 grasp_state, command = self.grasp_controller.update(state, tactile)
 
+                # Send command if controller requests it (e.g., slip compensation)
                 if command:
                     self.driver.write_control(*command)
+                    self.get_logger().info(
+                        f'Slip compensation: force increased to {self.grasp_controller.target_force}g'
+                    )
+
+                # Log when we reach holding state
+                if self.grasp_controller.is_holding() and not holding_logged:
+                    self.get_logger().info('Object grasped - monitoring for slip...')
+                    holding_logged = True
 
                 # Send feedback
                 feedback = GraspObject.Feedback()
@@ -423,7 +446,7 @@ class InspireHandNode(Node):
                 feedback.elapsed_time = elapsed
                 goal_handle.publish_feedback(feedback)
 
-                await asyncio.sleep(0.02)  # 50 Hz
+                time.sleep(0.02)  # 50 Hz
 
             # Get final state
             final_state = self.driver.read_state()

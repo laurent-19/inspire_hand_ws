@@ -6,6 +6,7 @@ int16 target_force            # Target grip force in grams (0-3000, default 500)
 int16[6] custom_angles        # Custom finger angles (only used if grasp_type="custom")
 float32 speed                 # Movement speed normalized (0.0-1.0, default 0.5)
 bool use_slip_compensation    # Enable slip detection and force adjustment (default true)
+float32 slip_threshold        # Weber's law slip threshold (0.0-1.0, default 0.12 = 12%)
 float32 timeout               # Timeout in seconds (default 10.0)
 ---
 # Result

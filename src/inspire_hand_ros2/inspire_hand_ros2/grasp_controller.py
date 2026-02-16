@@ -99,6 +99,10 @@ class GraspController:
     # Status code indicating force threshold reached
     STATUS_FORCE_REACHED = 3
 
+    # Angle step to close fingers more on slip detection
+    # angle=0 is CLOSED, so we subtract this to close more
+    SLIP_ANGLE_STEP = 100  # ~10% of full range for faster grip
+
     def __init__(self,
                  tactile_processor: Optional[TactileProcessor] = None,
                  force_estimator: Optional[AdaptiveForceEstimator] = None,
@@ -136,6 +140,10 @@ class GraspController:
         # Monitoring
         self.slip_count = 0
         self.max_force_during_load = 0.0
+        self.last_slip_time = 0.0
+        self.SLIP_COOLDOWN = 0.5  # Wait 0.5 seconds after slip before detecting again
+        self.INITIAL_HOLD_DELAY = 1.0  # Wait 1 second after reaching HOLD before enabling slip detection
+        self.hold_start_time = 0.0
 
     def start_grasp(self, grasp_type: str = 'power',
                     target_force: Optional[int] = None,
@@ -229,26 +237,61 @@ class GraspController:
 
             if contact_count >= 2 or holding_count >= 2:
                 self._transition_to(GraspState.HOLDING)
+                self.hold_start_time = time.time()
 
             # Timeout check
             elif self._time_in_state() > 3.0:
                 # Force reached on at least one finger
                 if holding_count >= 1:
                     self._transition_to(GraspState.HOLDING)
+                    self.hold_start_time = time.time()
 
         elif self.state == GraspState.HOLDING:
-            # Monitor for slip
-            if self.slip_compensation_enabled and self.tactile.any_slip_detected(signals.finger_slip):
+            # Monitor for slip (with delays to let grip stabilize)
+            time_since_slip = time.time() - self.last_slip_time
+            time_in_hold = time.time() - self.hold_start_time
+
+            # Wait for initial stabilization and cooldown after last slip response
+            slip_cooldown_passed = time_since_slip > self.SLIP_COOLDOWN
+            initial_delay_passed = time_in_hold > self.INITIAL_HOLD_DELAY
+
+            if (self.slip_compensation_enabled and
+                initial_delay_passed and
+                slip_cooldown_passed and
+                self.tactile.any_slip_detected(signals.finger_slip)):
+
                 self._transition_to(GraspState.SLIP_DETECTED)
+                self.last_slip_time = time.time()
 
                 # Increase force
                 new_force = self.force_estimator.adjust_for_slip()
+                print(f"[GRASP] SLIP #{self.slip_count + 1}: force {self.target_force} -> {new_force}, "
+                      f"hold_time={time_in_hold:.1f}s")
                 self.target_force = new_force
                 self.slip_count += 1
 
-                # Send updated force command
+                # Get current angles and compute tighter grip
+                # angle=0 is CLOSED, angle=1000 is OPEN
+                # Reduce angle by SLIP_ANGLE_STEP to close fingers more
+                current_angles = state.get('angle_act', self.target_angles)
+                new_angles = []
+                for i, angle in enumerate(current_angles):
+                    if i in (self.current_preset.active_fingers if self.current_preset else range(6)):
+                        # Close finger more (reduce angle toward 0)
+                        new_angle = max(0, angle - self.SLIP_ANGLE_STEP)
+                        new_angles.append(new_angle)
+                    else:
+                        new_angles.append(-1)  # Don't change inactive fingers
+
+                # Update target angles for tracking
+                for i, a in enumerate(new_angles):
+                    if a >= 0:
+                        self.target_angles[i] = a
+
+                # Send command with lower angles AND higher force
+                # This restarts finger movement toward more closed position
                 command = (
-                    [-1] * 6,  # Don't change angles
+                    new_angles,
                     [new_force] * 6,
                     [-1] * 6   # Don't change speeds
                 )

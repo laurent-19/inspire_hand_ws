@@ -206,11 +206,12 @@ int16[6] speed_set            # Speed (0-1000, -1=no change)
 ```
 # Goal
 string grasp_type             # Preset name or "custom"
-int16 target_force            # Force in grams
+int16 target_force            # Force in grams (0-3000, default 500)
 int16[6] custom_angles        # For custom grasps
-float32 speed                 # 0.0-1.0
-bool use_slip_compensation    # Enable slip response
-float32 timeout               # Timeout in seconds
+float32 speed                 # 0.0-1.0 (default 0.5)
+bool use_slip_compensation    # Enable slip response (default true)
+float32 slip_threshold        # Weber's law threshold (0.0-1.0, default 0.12 = 12%)
+float32 timeout               # Timeout in seconds (default 10.0)
 ---
 # Result
 bool success
@@ -238,29 +239,113 @@ float32 elapsed_time
 
 ## Grasp Controller
 
-The grasp controller implements a 6-state finite state machine based on human grasping behavior:
+The grasp controller implements a human-inspired finite state machine based on Romano et al. (IEEE TRO 2011).
+
+### State Machine
 
 ```
-IDLE → CLOSING → LOADING → HOLDING → REPLACING → UNLOADING → OPENING
-                              ↑
-                              └── SLIP_DETECTED (force adjustment)
+                    start_grasp()
+                         │
+                         ▼
+┌──────────┐       ┌──────────┐    contact     ┌──────────┐
+│   IDLE   │──────►│ CLOSING  │───────────────►│ LOADING  │
+└──────────┘       └──────────┘                └────┬─────┘
+     ▲                                              │
+     │                                    stable_contact (2+ fingers)
+     │                                              │
+     │                                         ┌────▼─────┐
+     │                                         │ HOLDING  │◄────┐
+     │                                         └────┬─────┘     │
+     │                                              │           │
+     │                                         slip_detected    │
+     │                                              │           │
+     │                                         ┌────▼─────┐     │
+     │    release()                            │   SLIP   │─────┘
+     │       │                                 │ DETECTED │ (adjust force + angles)
+     │       │                                 └──────────┘
+     │       │
+┌────┴───────┴─┐     force=0     ┌──────────┐    place()   ┌──────────┐
+│   OPENING    │◄────────────────│ UNLOADING│◄─────────────│ REPLACING│
+└──────────────┘                 └──────────┘              └──────────┘
 ```
 
-### Slip Detection (Weber's Law)
+### Slip Detection Algorithm
 
-Slip is detected when the tactile rate of change exceeds 12% of the current tactile value:
+Slip detection uses **Weber's Law** with additional safeguards adapted for the Inspire Hand's high-sensitivity tactile sensors:
 
-```python
-slip = abs(d_tactile/dt) > tactile_sum * 0.12
+```
+SLIP = (Weber condition) AND (Force stable) AND (Derivative above minimum)
 ```
 
-### Slip Compensation
+**Three conditions must ALL be true:**
 
-On slip detection, grip force increases by 5%:
+1. **Weber's Law** (from Romano et al.):
+   ```
+   |d(tactile)/dt| > tactile_sum × slip_threshold
+   ```
+   - Default `slip_threshold = 0.12` (12%)
+   - Configurable via action goal parameter
 
-```python
-new_force = current_force * 1.05
-```
+2. **Force Stability Check**:
+   ```
+   band_pass_force < force_stability_threshold
+   ```
+   - Band-pass filter (1-5 Hz) removes DC and high-frequency noise
+   - Prevents feedback loop: when grip force changes, tactile changes too
+   - If force is actively being adjusted, ignore slip signals
+
+3. **Minimum Derivative Threshold**:
+   ```
+   |d(tactile)/dt| > min_derivative_for_slip
+   ```
+   - Default `min_derivative_for_slip = 50000`
+   - Inspire Hand tactile sensors are very sensitive (derivatives 10,000-200,000)
+   - Filters out normal sensor noise during stable grasp
+
+### Slip Compensation Response
+
+When slip is detected, the controller:
+
+1. **Increases force** by 5%:
+   ```python
+   new_force = current_force × 1.05
+   ```
+
+2. **Closes fingers more** by reducing angles:
+   ```python
+   new_angle = current_angle - SLIP_ANGLE_STEP  # SLIP_ANGLE_STEP = 100
+   ```
+   - angle=0 is CLOSED, angle=1000 is OPEN
+   - Subtracting makes fingers grip tighter
+
+3. **Sends both** new angles AND new force to hardware
+
+### Timing Parameters
+
+| Parameter | Value | Purpose |
+|-----------|-------|---------|
+| `INITIAL_HOLD_DELAY` | 1.0s | Wait after entering HOLD before enabling slip detection (lets tactile filters settle) |
+| `SLIP_COOLDOWN` | 0.5s | Minimum time between slip responses (prevents oscillation) |
+| `SLIP_ANGLE_STEP` | 100 | Angle reduction per slip (~10% of full range) |
+
+### Why Both Force AND Angle?
+
+The Inspire Hand uses **hardware force limiting**: when `FORCE_SET[i]` is reached, the finger stops moving. Simply increasing the force limit doesn't restart finger movement if the finger already stopped.
+
+To make the hand grip tighter on slip:
+- **Increase force limit**: Allows more grip strength
+- **Decrease angle target**: Commands finger to close more, restarting movement toward the object
+
+### Tactile Signal Processing
+
+Two signal types (inspired by human mechanoreceptors):
+
+| Signal | Human Analog | Computation | Purpose |
+|--------|--------------|-------------|---------|
+| **SA-I** | Merkel cells | Sum of tactile values | Steady-state contact force |
+| **FA-I** | Meissner corpuscles | High-pass filtered tactile (5 Hz) | Force disturbances / slip |
+
+The FA-I signal (derivative) is used for slip detection because it responds to changes while ignoring steady contact.
 
 ## Python API Example
 
