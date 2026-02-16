@@ -1,0 +1,32 @@
+# Inspire Hand ROS2 Node Parameters
+# Default configuration for RH56DFTP Dexterous Hand
+
+inspire_hand:
+  ros__parameters:
+    # Connection settings
+    hand_ip: "192.168.11.210"
+    hand_port: 6000
+    device_id: 1
+
+    # Publishing rates (Hz)
+    state_rate: 100.0    # Actuator state publishing rate
+    touch_rate: 50.0     # Tactile sensor publishing rate
+
+    # Feature toggles
+    enable_tactile: true       # Enable tactile sensor reading
+    slip_compensation: true    # Enable slip detection and force adjustment
+
+    # Grasp controller defaults
+    default_force: 500         # Default grip force in grams
+    default_speed: 500         # Default movement speed (0-1000)
+
+    # Tactile processing thresholds
+    contact_threshold: 500     # Tactile sum for contact detection
+    derivative_threshold: 100  # Tactile derivative for contact detection
+    slip_threshold: 0.12       # Weber's law slip threshold (12%)
+    min_contact_for_slip: 200  # Minimum contact to detect slip
+
+    # Force control
+    max_force: 2000            # Maximum grip force in grams
+    min_force: 100             # Minimum grip force in grams
+    slip_force_increase: 1.05  # Force multiplier on slip (5% increase)

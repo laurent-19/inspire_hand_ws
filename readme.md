@@ -120,9 +120,9 @@ python inspire_hand_sdk/example/dds_subscribe.py [interface] [l/r] [domain]
 
 ## Additional Tools
 
-3. **Inspire Hand DDS Driver (Legacy - Single Hand)**:
+3. **Inspire Hand DDS Driver (Headless Mode)**:
 
-    Use the following script for the single-hand headless mode driver:
+    Use the following script for the headless mode driver:
     ```bash
     python inspire_hand_sdk/example/Headless_driver.py
     ```

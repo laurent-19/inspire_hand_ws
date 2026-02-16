@@ -1,0 +1,8 @@
+# GetHandState.srv - Get current hand state and tactile data
+
+# Request (empty)
+---
+# Response
+inspire_hand_ros2/InspireHandState state   # Current actuator state
+inspire_hand_ros2/InspireHandTouch touch   # Current tactile data
+inspire_hand_ros2/GraspStatus grasp_status # Current grasp controller state

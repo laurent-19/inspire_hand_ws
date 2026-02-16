@@ -1,0 +1,12 @@
+# Grasp.srv - Execute a grasp operation
+
+# Request
+string grasp_type             # "power", "pinch", "precision", "cylindrical", "hook", "open"
+int16 target_force            # Target grip force in grams (0-3000, default 500)
+float32 speed                 # Movement speed normalized (0.0-1.0, default 0.5)
+bool use_slip_compensation    # Enable slip detection and force adjustment (default true)
+---
+# Response
+bool success                  # True if grasp executed successfully
+string message                # Status message
+inspire_hand_ros2/GraspStatus status  # Final grasp status

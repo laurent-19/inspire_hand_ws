@@ -1,0 +1,113 @@
+# Grasp Presets for Inspire Hand
+# Defines predefined grasp patterns with angles and force limits
+#
+# Finger indices:
+#   0: Little finger
+#   1: Ring finger
+#   2: Middle finger
+#   3: Index finger
+#   4: Thumb bend
+#   5: Thumb rotation
+#
+# Angle values: 0 (open) to 1000 (fully closed/bent)
+# Force values: 0 to 3000 grams
+
+grasp_presets:
+  power:
+    description: "Full hand power grasp for large objects"
+    angles: [1000, 1000, 1000, 1000, 1000, 500]
+    force: 800
+    active_fingers: [0, 1, 2, 3, 4, 5]
+    use_cases:
+      - "Large objects"
+      - "Heavy objects"
+      - "Secure grip required"
+
+  pinch:
+    description: "Thumb-index pinch for small objects"
+    angles: [0, 0, 0, 1000, 1000, 800]
+    force: 400
+    active_fingers: [3, 4, 5]
+    use_cases:
+      - "Small objects"
+      - "Picking up items"
+      - "Precise manipulation"
+
+  precision:
+    description: "Three-finger precision grasp for delicate objects"
+    angles: [0, 0, 800, 900, 1000, 600]
+    force: 300
+    active_fingers: [2, 3, 4, 5]
+    use_cases:
+      - "Delicate objects"
+      - "Eggs, fruits"
+      - "Electronics"
+
+  cylindrical:
+    description: "Wrapped grasp for cylindrical objects"
+    angles: [800, 800, 800, 800, 600, 400]
+    force: 600
+    active_fingers: [0, 1, 2, 3, 4, 5]
+    use_cases:
+      - "Bottles"
+      - "Cans"
+      - "Handles"
+      - "Tools"
+
+  hook:
+    description: "Hook grasp using four fingers"
+    angles: [1000, 1000, 1000, 1000, 0, 0]
+    force: 700
+    active_fingers: [0, 1, 2, 3]
+    use_cases:
+      - "Bag handles"
+      - "Loops"
+      - "Hanging objects"
+
+  lateral:
+    description: "Side pinch for flat objects"
+    angles: [0, 0, 0, 800, 800, 900]
+    force: 350
+    active_fingers: [3, 4, 5]
+    use_cases:
+      - "Cards"
+      - "Keys"
+      - "Flat items"
+
+  tripod:
+    description: "Three-finger tripod grasp"
+    angles: [0, 0, 600, 800, 900, 500]
+    force: 400
+    active_fingers: [2, 3, 4, 5]
+    use_cases:
+      - "Writing instruments"
+      - "Small tools"
+      - "Stylus"
+
+  open:
+    description: "Fully open hand"
+    angles: [0, 0, 0, 0, 0, 0]
+    force: 0
+    active_fingers: []
+    use_cases:
+      - "Release object"
+      - "Ready position"
+
+# Finger naming reference
+finger_names:
+  0: "little"
+  1: "ring"
+  2: "middle"
+  3: "index"
+  4: "thumb_bend"
+  5: "thumb_rotate"
+
+# Status code reference
+status_codes:
+  0: "Releasing"
+  1: "Grasping"
+  2: "Position reached"
+  3: "Force reached (object grasped)"
+  5: "Current protection"
+  6: "Stall"
+  7: "Fault"

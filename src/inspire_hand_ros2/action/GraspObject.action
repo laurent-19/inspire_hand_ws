@@ -1,0 +1,21 @@
+# GraspObject.action - Grasp object with real-time feedback
+
+# Goal
+string grasp_type             # "power", "pinch", "precision", "cylindrical", "hook", "custom"
+int16 target_force            # Target grip force in grams (0-3000, default 500)
+int16[6] custom_angles        # Custom finger angles (only used if grasp_type="custom")
+float32 speed                 # Movement speed normalized (0.0-1.0, default 0.5)
+bool use_slip_compensation    # Enable slip detection and force adjustment (default true)
+float32 timeout               # Timeout in seconds (default 10.0)
+---
+# Result
+bool success                  # True if grasp completed successfully
+string message                # Status message
+int16[6] final_force          # Final grip force per finger (grams)
+uint8[6] final_status         # Final status codes per finger
+float32 elapsed_time          # Time taken to complete grasp
+---
+# Feedback (published during grasp operation)
+inspire_hand_ros2/GraspStatus status  # Current grasp status
+float32 progress              # Progress 0.0 to 1.0
+float32 elapsed_time          # Time since grasp started

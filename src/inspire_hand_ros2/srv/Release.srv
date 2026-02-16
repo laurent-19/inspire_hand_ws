@@ -1,0 +1,8 @@
+# Release.srv - Release grasp and open hand
+
+# Request
+float32 speed                 # Opening speed normalized (0.0-1.0, default 0.5)
+---
+# Response
+bool success                  # True if release completed
+string message                # Status message

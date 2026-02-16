@@ -1,0 +1,12 @@
+# SetFingerPosition.srv - Set individual finger positions
+
+# Request
+# Finger indices: 0=little, 1=ring, 2=middle, 3=index, 4=thumb_bend, 5=thumb_rotate
+uint8[] finger_indices        # Which fingers to control
+int16[] angles                # Target angles (0-1000 per finger)
+int16[] force_limits          # Force limits in grams (0-3000 per finger)
+int16[] speeds                # Movement speeds (0-1000 per finger)
+---
+# Response
+bool success                  # True if command sent successfully
+string message                # Status message
