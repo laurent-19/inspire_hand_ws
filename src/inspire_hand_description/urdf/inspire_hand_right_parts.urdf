@@ -1,0 +1,704 @@
+<?xml version="1.0" ?>
+<robot name="inspire_hand_right">
+  <link name="base_link">
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_032.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_050.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_000.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_002.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_003.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_005.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_006.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_008.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_009.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_011.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_023.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_024.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_025.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_026.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_027.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_028.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_029.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_030.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_031.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_001.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_004.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_007.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_010.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_012.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_013.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_014.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_015.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_017.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_016.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_019.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_020.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_021.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_018.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_022.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_041.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_051.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_052.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_053.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_033.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_034.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_035.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_036.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_032.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="thumb_1_link">
+    <visual>
+      <origin xyz="0.008300 0.072500 -0.111800" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_054.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.008300 0.072500 -0.111800" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_055.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.008300 0.072500 -0.111800" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_054.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="little_1_link">
+    <visual>
+      <origin xyz="0.040800 -0.037100 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_038.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.040800 -0.037100 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_047.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.040800 -0.037100 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_038.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="little_2_link">
+    <visual>
+      <origin xyz="0.042200 -0.075700 -0.108400" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_042.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.042200 -0.075700 -0.108400" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_042.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="ring_1_link">
+    <visual>
+      <origin xyz="0.018800 -0.037600 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_040.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.018800 -0.037600 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_048.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.018800 -0.037600 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_040.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="ring_2_link">
+    <visual>
+      <origin xyz="0.018800 -0.076000 -0.107700" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_043.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.018800 -0.076000 -0.107700" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_043.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="middle_1_link">
+    <visual>
+      <origin xyz="-0.003400 -0.036900 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_037.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.003400 -0.036900 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_049.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.003400 -0.036900 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_037.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="middle_2_link">
+    <visual>
+      <origin xyz="-0.005700 -0.075600 -0.108400" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_045.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.005700 -0.075600 -0.108400" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_045.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="index_1_link">
+    <visual>
+      <origin xyz="-0.025200 -0.033200 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_039.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="-0.025200 -0.033200 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_046.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.025200 -0.033200 -0.109100" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_039.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <link name="index_2_link">
+    <visual>
+      <origin xyz="-0.029600 -0.072000 -0.109400" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_044.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.9 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.029600 -0.072000 -0.109400" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://inspire_hand_description/meshes/right/part_044.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-06" ixy="0" ixz="0" iyy="1e-06" iyz="0" izz="1e-06"/>
+    </inertial>
+  </link>
+  <joint name="thumb_1_joint" type="revolute">
+    <origin xyz="-0.0083 -0.0725 0.1118" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="thumb_1_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.5" effort="50" velocity="1"/>
+  </joint>
+  <joint name="index_1_joint" type="revolute">
+    <origin xyz="0.0252 0.0332 0.1091" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="index_1_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.333" effort="50" velocity="1"/>
+  </joint>
+  <joint name="index_2_joint" type="revolute">
+    <origin xyz="0.0044 0.0388 0.0003" rpy="0 0 0"/>
+    <parent link="index_1_link"/>
+    <child link="index_2_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.527" effort="50" velocity="1"/>
+    <mimic joint="index_1_joint" multiplier="1.1169" offset="0"/>
+  </joint>
+  <joint name="middle_1_joint" type="revolute">
+    <origin xyz="0.0034 0.0369 0.1091" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="middle_1_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.333" effort="50" velocity="1"/>
+  </joint>
+  <joint name="middle_2_joint" type="revolute">
+    <origin xyz="0.0023 0.0387 -0.0007" rpy="0 0 0"/>
+    <parent link="middle_1_link"/>
+    <child link="middle_2_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.527" effort="50" velocity="1"/>
+    <mimic joint="middle_1_joint" multiplier="1.1169" offset="0"/>
+  </joint>
+  <joint name="ring_1_joint" type="revolute">
+    <origin xyz="-0.0188 0.0376 0.1091" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="ring_1_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.333" effort="50" velocity="1"/>
+  </joint>
+  <joint name="ring_2_joint" type="revolute">
+    <origin xyz="0.0 0.0384 -0.0014" rpy="0 0 0"/>
+    <parent link="ring_1_link"/>
+    <child link="ring_2_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.527" effort="50" velocity="1"/>
+    <mimic joint="ring_1_joint" multiplier="1.1169" offset="0"/>
+  </joint>
+  <joint name="little_1_joint" type="revolute">
+    <origin xyz="-0.0408 0.0371 0.1091" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="little_1_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.333" effort="50" velocity="1"/>
+  </joint>
+  <joint name="little_2_joint" type="revolute">
+    <origin xyz="-0.0014 0.0386 -0.0007" rpy="0 0 0"/>
+    <parent link="little_1_link"/>
+    <child link="little_2_link"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="0" upper="1.527" effort="50" velocity="1"/>
+    <mimic joint="little_1_joint" multiplier="1.1169" offset="0"/>
+  </joint>
+</robot>

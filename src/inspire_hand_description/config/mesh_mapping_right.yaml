@@ -1,0 +1,147 @@
+# Mesh mapping for Inspire Hand Right (RH56DFTP-0R)
+# Maps part STL files to URDF links with coordinate transformation info
+#
+# Coordinate systems:
+#   CAD (our meshes): X across fingers, Y toward fingertips, Z along palm
+#   Reference URDF:   X out of palm, Y along finger, Z up
+#
+# For finger links, joint_position specifies where to place the origin
+# (translation needed to put joint at origin in link-local coords)
+
+hand_side: right
+
+links:
+  base_link:
+    # Palm housing and internal mechanisms
+    transform: none
+    output_name: base_link.stl
+    meshes:
+      - part_000.stl
+      - part_002.stl
+      - part_003.stl
+      - part_005.stl
+      - part_008.stl
+      - part_009.stl
+      - part_011.stl
+      - part_023.stl
+      - part_024.stl
+      - part_025.stl
+      - part_028.stl
+      - part_029.stl
+      - part_030.stl
+      - part_032.stl
+      - part_033.stl
+      - part_034.stl
+      - part_035.stl
+      - part_036.stl
+      - part_050.stl
+
+  # Thumb chain
+  thumb_1_link:
+    transform: none
+    output_name: thumb_1_link.stl
+    meshes:
+      - part_016.stl
+      - part_017.stl
+      - part_018.stl
+      - part_019.stl
+      - part_020.stl
+      - part_021.stl
+      - part_022.stl
+      - part_026.stl
+      - part_027.stl
+      - part_031.stl
+      - part_041.stl
+      - part_051.stl
+      - part_052.stl
+      - part_053.stl
+
+  thumb_2_link:
+    transform: none
+    output_name: thumb_2_link.stl
+    meshes:
+      - part_001.stl
+      - part_004.stl
+      - part_006.stl
+      - part_007.stl
+      - part_010.stl
+      - part_012.stl
+      - part_013.stl
+      - part_014.stl
+      - part_015.stl
+
+  thumb_3_link:
+    transform: none
+    output_name: thumb_3_link.stl
+    meshes:
+      - part_054.stl
+
+  thumb_4_link:
+    transform: none
+    output_name: thumb_4_link.stl
+    meshes:
+      - part_055.stl
+
+  # Little finger - joint positions from mesh min-Y analysis (CAD coords in meters)
+  little_1_link:
+    transform: none
+    output_name: little_1_link.stl
+    joint_position: [-0.0505, 0.0320, 0.0973]
+    meshes:
+      - part_038.stl
+      - part_047.stl
+
+  little_2_link:
+    transform: none
+    output_name: little_2_link.stl
+    joint_position: [-0.0511, 0.0696, 0.0972]
+    meshes:
+      - part_042.stl
+
+  # Ring finger
+  ring_1_link:
+    transform: none
+    output_name: ring_1_link.stl
+    joint_position: [-0.0280, 0.0327, 0.0974]
+    meshes:
+      - part_040.stl
+      - part_048.stl
+
+  ring_2_link:
+    transform: none
+    output_name: ring_2_link.stl
+    joint_position: [-0.0272, 0.0701, 0.0963]
+    meshes:
+      - part_043.stl
+
+  # Middle finger
+  middle_1_link:
+    transform: none
+    output_name: middle_1_link.stl
+    joint_position: [-0.0066, 0.0317, 0.0973]
+    meshes:
+      - part_037.stl
+      - part_049.stl
+
+  middle_2_link:
+    transform: none
+    output_name: middle_2_link.stl
+    joint_position: [-0.0036, 0.0693, 0.0972]
+    meshes:
+      - part_045.stl
+
+  # Index finger
+  index_1_link:
+    transform: none
+    output_name: index_1_link.stl
+    joint_position: [0.0141, 0.0278, 0.0973]
+    meshes:
+      - part_039.stl
+      - part_046.stl
+
+  index_2_link:
+    transform: none
+    output_name: index_2_link.stl
+    joint_position: [0.0197, 0.0655, 0.0991]
+    meshes:
+      - part_044.stl

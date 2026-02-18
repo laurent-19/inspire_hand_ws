@@ -40,11 +40,18 @@ def generate_launch_description():
         description='Launch RViz'
     )
 
+    urdf_variant_arg = DeclareLaunchArgument(
+        'urdf',
+        default_value='ref',
+        description='URDF variant: parts (individual meshes), ref (reference joint structure)'
+    )
+
     # URDF file path
+    # Use inspire_hand_{hand}.urdf for default, inspire_hand_{hand}_parts.urdf for parts
     urdf_file = PathJoinSubstitution([
         pkg_share,
         'urdf',
-        ['inspire_hand_', LaunchConfiguration('hand'), '.urdf']
+        ['inspire_hand_', LaunchConfiguration('hand'), '_', LaunchConfiguration('urdf'), '.urdf']
     ])
 
     # RViz config file
@@ -86,6 +93,7 @@ def generate_launch_description():
         hand_arg,
         gui_arg,
         rviz_arg,
+        urdf_variant_arg,
         robot_state_publisher,
         joint_state_publisher_gui,
         rviz,

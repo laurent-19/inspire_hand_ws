@@ -1,0 +1,107 @@
+# Mesh mapping for Inspire Hand Left (RH56DFTP-0L)
+# Maps part STL files to URDF links
+#
+# Left hand is mirror of right - Z coordinates are negated
+
+hand_side: left
+
+links:
+  base_link:
+    # Palm housing and internal mechanisms
+    meshes:
+      - part_001.stl
+      - part_003.stl
+      - part_004.stl
+      - part_005.stl
+      - part_006.stl
+      - part_009.stl
+      - part_010.stl
+      - part_011.stl
+      - part_012.stl
+      - part_013.stl
+      - part_014.stl
+      - part_015.stl
+      - part_020.stl
+      - part_021.stl
+      - part_022.stl
+      - part_023.stl
+      - part_025.stl
+      - part_026.stl
+      - part_028.stl
+      - part_029.stl
+      - part_031.stl
+
+  # Thumb chain
+  thumb_1_link:
+    meshes:
+      - part_000.stl
+      - part_002.stl
+      - part_007.stl
+      - part_008.stl
+      - part_024.stl
+      - part_027.stl
+      - part_037.stl
+      - part_040.stl
+      - part_041.stl
+      - part_042.stl
+
+  thumb_2_link:
+    meshes: []
+
+  thumb_3_link:
+    meshes:
+      - part_039.stl
+
+  thumb_4_link:
+    meshes:
+      - part_038.stl
+
+  # Little finger
+  little_1_link:
+    meshes:
+      - part_017.stl
+      - part_036.stl
+
+  little_2_link:
+    meshes: []
+
+  little_3_link:
+    meshes: []
+
+  # Ring finger
+  ring_1_link:
+    meshes:
+      - part_019.stl
+      - part_033.stl
+
+  ring_2_link:
+    meshes:
+      - part_034.stl
+
+  ring_3_link:
+    meshes: []
+
+  # Middle finger
+  middle_1_link:
+    meshes:
+      - part_016.stl
+      - part_032.stl
+
+  middle_2_link:
+    meshes: []
+
+  middle_3_link:
+    meshes: []
+
+  # Index finger
+  index_1_link:
+    meshes:
+      - part_018.stl
+      - part_030.stl
+
+  index_2_link:
+    meshes:
+      - part_035.stl
+
+  index_3_link:
+    meshes: []
