@@ -19,6 +19,7 @@ Thumbs.db
 *.wmv
 *.jpg
 *.png
+!**/doc/*.png
 
 # VS Code
 .vscode
