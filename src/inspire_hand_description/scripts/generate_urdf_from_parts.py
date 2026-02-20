@@ -28,8 +28,8 @@ PART_ASSIGNMENTS = {
             # Palm mechanism/internals (Y ~ 0 to -25mm)
             'part_000', 'part_002', 'part_003', 'part_005', 'part_006', 'part_008',
             'part_009', 'part_011', 'part_023', 'part_024', 'part_025',
-            # Palm base/mount
-            'part_026', 'part_027', 'part_028', 'part_029', 'part_030', 'part_031',
+            # Palm base/mount (029-031 moved to thumb links)
+            'part_026', 'part_027', 'part_028',
             # Screws/fasteners (tiny parts at high Z)
             'part_001', 'part_004', 'part_007', 'part_010',
             'part_012', 'part_013', 'part_014', 'part_015', 'part_017',
@@ -41,10 +41,10 @@ PART_ASSIGNMENTS = {
             'part_033', 'part_034', 'part_035', 'part_036',
         ],
 
-        # Thumb - simplified structure based on reference URDF
-        # The internal mechanism parts are likely fixed to palm (not visible rotation)
-        # Only the actual thumb phalanx (part_054, 055) rotates
-        'thumb_1_link': ['part_054', 'part_055'],  # Main thumb body + sensor cap
+        # Thumb - parts 029-031 per SolidWorks verification
+        # 029=tip, 030=middle, 031=bottom (base)
+        'thumb_1_link': ['part_031'],  # Bottom/base of thumb (rotation)
+        'thumb_2_link': ['part_030', 'part_029'],  # Middle and tip (bend)
 
         # Little finger
         'little_1_link': ['part_038', 'part_047'],
@@ -68,15 +68,26 @@ PART_ASSIGNMENTS = {
 # These are actual connection points from our CAD meshes
 JOINT_POSITIONS = {
     'right': {
-        # Thumb joint (single link - just the phalanx part_054/055)
-        # part_054 bbox: Y=[-111, -72.5]mm, X=[-33, 17]mm, Z=[87, 137]mm
-        # Joint at proximal end (Y=-72.5mm, where it connects to palm)
+        # Thumb rotation joint (DOF5 - opposition/abduction)
+        # part_031 centroid: (-0.041, -0.025, 0.071), connects to palm at top (Z~0.090)
+        # Joint at the pivot point where thumb connects to palm
         'thumb_1_joint': {
-            'xyz': (-0.0083, -0.0725, 0.1118),  # At part_054 proximal end
+            'xyz': (-0.041, -0.020, 0.090),  # Pivot at top of part_031
             'rpy': (0, 0, 0),
-            'axis': (-1, 0, 0),  # Bend around -X (curl toward palm)
+            'axis': (0, 0, -1),  # Rotate around -Z
             'type': 'revolute',
-            'limits': (0, 1.5),
+            'limits': (0, 1.246),
+        },
+        # Thumb bend joint (DOF4 - flexion)
+        # Between part_031 and part_030
+        # part_030 centroid: (-0.049, -0.004, 0.046)
+        # Relative offset from thumb_1: (-0.008, 0.016, -0.044)
+        'thumb_2_joint': {
+            'xyz': (-0.008, 0.016, -0.044),  # Offset toward part_030
+            'rpy': (0, 0, 0),
+            'axis': (0, 1, 0),  # Bend around Y axis
+            'type': 'revolute',
+            'limits': (0, 0.48),
         },
 
         # Index finger joints (from mesh analysis)
@@ -160,8 +171,9 @@ JOINT_POSITIONS = {
 # Kinematic chain definition
 KINEMATIC_CHAIN = {
     'right': [
-        # Thumb (1 link: phalanx only, mechanism is internal)
-        ('base_link', 'thumb_1_link', 'thumb_1_joint'),
+        # Thumb (2 links: rotation + bend)
+        ('base_link', 'thumb_1_link', 'thumb_1_joint'),  # Rotation
+        ('thumb_1_link', 'thumb_2_link', 'thumb_2_joint'),  # Bend
 
         # Fingers (2 links each: proximal, distal)
         ('base_link', 'index_1_link', 'index_1_joint'),
@@ -183,7 +195,9 @@ def get_link_world_origin(link_name: str, side: str) -> Tuple[float, float, floa
     """
     Get the world-coordinate origin of a link (sum of joint positions in chain).
     This is needed to offset meshes which are in world coordinates.
+    Accounts for joint rotations (rpy) when computing positions.
     """
+    import math
     chain = KINEMATIC_CHAIN.get(side, [])
     joints = JOINT_POSITIONS.get(side, {})
 
@@ -194,27 +208,36 @@ def get_link_world_origin(link_name: str, side: str) -> Tuple[float, float, floa
         parent_map[child] = parent
         joint_map[child] = joint_name
 
+    # Build chain from link to base
+    chain_to_base = []
+    current = link_name
+    while current in parent_map:
+        chain_to_base.append(current)
+        current = parent_map[current]
+
     # Accumulate joint positions from base to this link
     origin = [0.0, 0.0, 0.0]
-    current = link_name
+    accumulated_yaw = 0.0  # Track Z rotation
 
-    while current in parent_map:
-        joint_name = joint_map[current]
+    # Process from base to link (reverse order)
+    for link in reversed(chain_to_base):
+        joint_name = joint_map[link]
         if joint_name in joints:
             xyz = joints[joint_name]['xyz']
-            # For non-base links, the joint xyz is relative to parent
-            # We need to accumulate world position
-            # This is simplified - doesn't account for rotations
-            if parent_map[current] == 'base_link':
-                origin[0] += xyz[0]
-                origin[1] += xyz[1]
-                origin[2] += xyz[2]
-            else:
-                # Child joints are relative, add to accumulated
-                origin[0] += xyz[0]
-                origin[1] += xyz[1]
-                origin[2] += xyz[2]
-        current = parent_map[current]
+            rpy = joints[joint_name].get('rpy', (0, 0, 0))
+
+            # Apply current accumulated rotation to xyz offset
+            cos_yaw = math.cos(accumulated_yaw)
+            sin_yaw = math.sin(accumulated_yaw)
+            rotated_x = xyz[0] * cos_yaw - xyz[1] * sin_yaw
+            rotated_y = xyz[0] * sin_yaw + xyz[1] * cos_yaw
+
+            origin[0] += rotated_x
+            origin[1] += rotated_y
+            origin[2] += xyz[2]
+
+            # Accumulate yaw rotation for next iteration
+            accumulated_yaw += rpy[2]
 
     return tuple(origin)
 
@@ -225,15 +248,32 @@ def create_link_element(robot: ET.Element, link_name: str, parts: List[str],
     link = ET.SubElement(robot, 'link', name=link_name)
 
     # Calculate visual origin offset
-    # Meshes are in world coords, but link frame is at joint position
-    # So we need to offset visual by negative of accumulated joint positions
+    # Meshes are in world coords, link frame is at joint position
+    # For base_link: no offset needed (link is at origin)
+    # For other links: offset = -(link world position) so mesh stays at world coords
     if link_name == 'base_link':
         visual_origin = (0, 0, 0)
     else:
+        # For thumb, the mesh (part_054) is at world position, we need to
+        # offset it so it appears at the correct location relative to the link frame
         world_origin = get_link_world_origin(link_name, side)
+        # The visual origin shifts the mesh; we want mesh to stay at its world position
+        # mesh_world = link_world + visual_origin + mesh_local
+        # Since mesh_local IS mesh_world (STL in world coords), we need:
+        # mesh_world = link_world + visual_origin + mesh_world
+        # 0 = link_world + visual_origin
+        # visual_origin = -link_world
         visual_origin = (-world_origin[0], -world_origin[1], -world_origin[2])
 
     origin_str = f'{visual_origin[0]:.6f} {visual_origin[1]:.6f} {visual_origin[2]:.6f}'
+
+    # Determine color based on link name
+    if 'thumb' in link_name:
+        color_rgba = '0.9 0.2 0.2 1'  # Red for thumb
+    elif 'base' in link_name:
+        color_rgba = '0.3 0.3 0.9 1'  # Blue for base
+    else:
+        color_rgba = '0.9 0.9 0.9 1'  # Gray for fingers
 
     # Add visual for each part
     for part in parts:
@@ -243,13 +283,13 @@ def create_link_element(robot: ET.Element, link_name: str, parts: List[str],
         mesh_path = f'package://{pkg_name}/meshes/{side}/{part}.stl'
         ET.SubElement(geometry, 'mesh', filename=mesh_path)
         material = ET.SubElement(visual, 'material', name='')
-        ET.SubElement(material, 'color', rgba='0.9 0.9 0.9 1')
+        ET.SubElement(material, 'color', rgba=color_rgba)
 
-    # Add simple collision
-    collision = ET.SubElement(link, 'collision')
-    ET.SubElement(collision, 'origin', xyz=origin_str, rpy='0 0 0')
-    coll_geom = ET.SubElement(collision, 'geometry')
+    # Add simple collision (only if we have parts)
     if parts:
+        collision = ET.SubElement(link, 'collision')
+        ET.SubElement(collision, 'origin', xyz=origin_str, rpy='0 0 0')
+        coll_geom = ET.SubElement(collision, 'geometry')
         mesh_path = f'package://{pkg_name}/meshes/{side}/{parts[0]}.stl'
         ET.SubElement(coll_geom, 'mesh', filename=mesh_path)
 

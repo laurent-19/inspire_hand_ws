@@ -14,6 +14,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.descriptions import ParameterValue
 from launch.conditions import IfCondition
 
 
@@ -68,7 +69,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         output='screen',
         parameters=[{
-            'robot_description': Command(['cat ', urdf_file])
+            'robot_description': ParameterValue(Command(['xacro ', urdf_file]), value_type=str)
         }]
     )
 
