@@ -366,7 +366,7 @@ class InspireHandNode(Node):
         return CancelResponse.ACCEPT
 
     def grasp_action_execute(self, goal_handle):
-        """Execute grasp action with feedback and continuous slip monitoring."""
+        """Execute grasp action with feedback and slip monitoring until timeout."""
         self.get_logger().info(f'Executing grasp: {goal_handle.request.grasp_type}')
 
         request = goal_handle.request
@@ -398,7 +398,6 @@ class InspireHandNode(Node):
             self.driver.write_control(angles, forces, speeds)
 
             # Monitor and send feedback
-            # If timeout is 0, use a long default for continuous monitoring
             timeout = request.timeout if request.timeout > 0 else 60.0
             start_time = time.time()
             holding_logged = False
@@ -457,6 +456,9 @@ class InspireHandNode(Node):
             result.final_status = list(final_state.get('status', [0] * 6))
             result.elapsed_time = time.time() - start_time
 
+            # Reset controller to IDLE state (stops slip monitoring/compensation)
+            self.grasp_controller.abort()
+
             if result.success:
                 goal_handle.succeed()
             else:
@@ -466,6 +468,7 @@ class InspireHandNode(Node):
             self.get_logger().error(f'Grasp action error: {e}')
             result.success = False
             result.message = f'Error: {e}'
+            self.grasp_controller.abort()
             goal_handle.abort()
 
         return result

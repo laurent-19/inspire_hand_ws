@@ -69,16 +69,28 @@ ros2 launch inspire_hand_ros2 inspire_hand.launch.py \
 ```bash
 # Power grasp (closes all fingers)
 ros2 service call /inspire_hand/inspire_hand_node/grasp inspire_hand_ros2/srv/Grasp \
-  "{grasp_type: 'power', target_force: 500}"
+  "{grasp_type: 'power', target_force: 300, speed: 0.1}"
 
 # Pinch grasp (thumb + index)
 ros2 service call /inspire_hand/inspire_hand_node/grasp inspire_hand_ros2/srv/Grasp \
-  "{grasp_type: 'pinch', target_force: 300}"
+  "{grasp_type: 'pinch', target_force: 300, speed: 0.1}"
 
 # Release (open hand)
 ros2 service call /inspire_hand/inspire_hand_node/release inspire_hand_ros2/srv/Release \
   "{speed: 0.5}"
 ```
+
+### Grasp with Real-Time Feedback (Action)
+
+Use the action interface for real-time feedback during grasp operations:
+
+```bash
+ros2 action send_goal /inspire_hand/inspire_hand_node/grasp_object inspire_hand_ros2/action/GraspObject \
+  "{grasp_type: 'power', target_force: 300, speed: 0.1, use_slip_compensation: true, timeout: 30.0}" \
+  --feedback
+```
+
+The `--feedback` flag streams progress updates including grasp state, elapsed time, and slip detection events.
 
 ### Direct Control
 
@@ -381,8 +393,8 @@ class GraspExample(Node):
     async def execute_grasp(self):
         request = Grasp.Request()
         request.grasp_type = 'precision'
-        request.target_force = 400
-        request.speed = 0.5
+        request.target_force = 300
+        request.speed = 0.1
         request.use_slip_compensation = True
 
         result = await self.grasp_client.call_async(request)
