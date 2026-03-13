@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Launch file for visualizing Inspire Hand URDF in RViz
+Launch file for visualizing RH56E2 Hand URDF in RViz
 
 Usage:
     ros2 launch inspire_hand_description display.launch.py
@@ -10,57 +10,24 @@ Usage:
 
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
 from launch_ros.descriptions import ParameterValue
 from launch.conditions import IfCondition
+from ament_index_python.packages import get_package_share_directory
 
 
-def generate_launch_description():
+def launch_setup(context, *args, **kwargs):
+    # Get launch configuration values
+    hand = LaunchConfiguration('hand').perform(context)
+
     # Package share directory
-    pkg_share = FindPackageShare('inspire_hand_description')
+    pkg_share = get_package_share_directory('inspire_hand_description')
 
-    # Launch arguments
-    hand_arg = DeclareLaunchArgument(
-        'hand',
-        default_value='right',
-        description='Which hand to display: right or left'
-    )
-
-    gui_arg = DeclareLaunchArgument(
-        'gui',
-        default_value='true',
-        description='Show joint_state_publisher_gui'
-    )
-
-    rviz_arg = DeclareLaunchArgument(
-        'rviz',
-        default_value='true',
-        description='Launch RViz'
-    )
-
-    urdf_variant_arg = DeclareLaunchArgument(
-        'urdf',
-        default_value='ref',
-        description='URDF variant: parts (individual meshes), ref (reference joint structure)'
-    )
-
-    # URDF file path
-    # Use inspire_hand_{hand}.urdf for default, inspire_hand_{hand}_parts.urdf for parts
-    urdf_file = PathJoinSubstitution([
-        pkg_share,
-        'urdf',
-        ['inspire_hand_', LaunchConfiguration('hand'), '_', LaunchConfiguration('urdf'), '.urdf']
-    ])
-
-    # RViz config file
-    rviz_config = PathJoinSubstitution([
-        pkg_share,
-        'rviz',
-        'display.rviz'
-    ])
+    # Build file paths
+    urdf_file = os.path.join(pkg_share, 'urdf', f'rh56e2_{hand}.urdf')
+    rviz_config = os.path.join(pkg_share, 'rviz', f'{hand}.rviz')
 
     # Robot state publisher
     robot_state_publisher = Node(
@@ -90,12 +57,36 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('rviz'))
     )
 
+    return [
+        robot_state_publisher,
+        joint_state_publisher_gui,
+        rviz,
+    ]
+
+
+def generate_launch_description():
+    # Launch arguments
+    hand_arg = DeclareLaunchArgument(
+        'hand',
+        default_value='right',
+        description='Which hand to display: right or left'
+    )
+
+    gui_arg = DeclareLaunchArgument(
+        'gui',
+        default_value='true',
+        description='Show joint_state_publisher_gui'
+    )
+
+    rviz_arg = DeclareLaunchArgument(
+        'rviz',
+        default_value='true',
+        description='Launch RViz'
+    )
+
     return LaunchDescription([
         hand_arg,
         gui_arg,
         rviz_arg,
-        urdf_variant_arg,
-        robot_state_publisher,
-        joint_state_publisher_gui,
-        rviz,
+        OpaqueFunction(function=launch_setup)
     ])

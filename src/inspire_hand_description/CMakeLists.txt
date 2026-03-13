@@ -10,15 +10,8 @@ find_package(ament_cmake REQUIRED)
 
 # Install directories
 install(
-  DIRECTORY urdf meshes launch rviz
+  DIRECTORY urdf meshes launch rviz config
   DESTINATION share/${PROJECT_NAME}
-)
-
-# Install scripts (for development)
-install(
-  DIRECTORY scripts
-  DESTINATION share/${PROJECT_NAME}
-  USE_SOURCE_PERMISSIONS
 )
 
 if(BUILD_TESTING)
