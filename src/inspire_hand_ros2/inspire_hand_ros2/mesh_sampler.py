@@ -36,11 +36,12 @@ class MeshSampler:
     # Tactile sensors are on the force sensor pads
     # Format: link_name -> (region_name, num_taxels)
     TACTILE_LINKS = {
-        # Thumb (4 regions, 210 taxels total)
+        # Thumb (4 regions, 210 taxels total) - per hardware doc
+        # sensor_1=pad(96), sensor_2=middle(9), sensor_3=nail(96), sensor_4=tip(9)
         'right_thumb_force_sensor_4': ('thumb_tip', 9),       # 3×3 grid
-        'right_thumb_force_sensor_1': ('thumb_nail', 96),     # 12×8 grid
-        'right_thumb_force_sensor_3': ('thumb_middle', 9),    # 3×3 grid
-        'right_thumb_force_sensor_2': ('thumb_pad', 96),      # 12×8 grid
+        'right_thumb_force_sensor_3': ('thumb_nail', 96),     # 12×8 grid
+        'right_thumb_force_sensor_2': ('thumb_middle', 9),    # 3×3 grid
+        'right_thumb_force_sensor_1': ('thumb_pad', 96),      # 12×8 grid
 
         # Index finger (3 regions, 185 taxels)
         'right_index_force_sensor_3': ('index_tip', 9),       # 3×3 grid

@@ -187,10 +187,11 @@ class TactilePointCloudNode(Node):
 
             # Convert to angle_actual format (radians to 0-1000)
             # This is inverse of kinematics_solver.angle_actual_to_radians
+            # Inverted: 0 rad (open) → 1000, π/2 rad (closed) → 0
             for dof_idx, joint_name in self.kinematics_solver.DOF_TO_JOINT.items():
                 if joint_name in joint_angles:
                     radians = joint_angles[joint_name]
-                    angle_actual = int((radians / (np.pi / 2.0)) * 1000.0)
+                    angle_actual = int(1000.0 - (radians / (np.pi / 2.0)) * 1000.0)
                     self.latest_joint_angles[dof_idx] = angle_actual
 
             self.last_update_time = self.get_clock().now()
@@ -310,7 +311,7 @@ class TactilePointCloudNode(Node):
 
         # Populate message
         msg.name = list(joint_positions.keys())
-        msg.position = list(joint_positions.values())
+        msg.position = [float(v) for v in joint_positions.values()]  # Convert numpy floats to Python floats
 
         self.js_pub.publish(msg)
 

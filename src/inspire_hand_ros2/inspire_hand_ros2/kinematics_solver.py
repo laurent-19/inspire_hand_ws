@@ -163,10 +163,10 @@ class KinematicsSolver:
         Convert angle_actual (0-1000) to radians.
 
         This is an empirical mapping that may need calibration.
-        Assuming 0 = fully open (0 rad) and 1000 = fully closed (~1.57 rad)
+        Actual mapping: 1000 = fully open (0 rad) and 0 = fully closed (~1.57 rad)
         """
-        # Linear mapping: 1000 units ~ π/2 radians (90 degrees)
-        return (angle_actual / 1000.0) * (np.pi / 2.0)
+        # Inverted linear mapping: 1000 units (open) → 0 rad, 0 units (closed) → π/2 radians
+        return ((1000.0 - angle_actual) / 1000.0) * (np.pi / 2.0)
 
     def compute_all_transforms(self,
                                joint_positions: Optional[Dict[str, float]] = None,

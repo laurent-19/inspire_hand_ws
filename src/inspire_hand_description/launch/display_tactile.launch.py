@@ -74,6 +74,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'urdf_path': urdf_file,
+            'package_path': description_pkg,
             'use_hand_state': False,  # Use standard JointState
             'joint_state_topic': '/joint_states',
             'tactile_topic': '/inspire_hand/inspire_hand_node/touch',

@@ -44,11 +44,12 @@ class TactileMapper:
         TactileRegion("index_nail", "right_index_force_sensor_2", (12, 8), 96),
         TactileRegion("index_pad", "right_index_force_sensor_1", (10, 8), 80),
 
-        # Thumb (210 taxels) - on force sensors
+        # Thumb (210 taxels) - per hardware doc: tip(9), nail(96), middle(9), pad(96)
+        # sensor_1=pad(96), sensor_2=middle(9), sensor_3=nail(96), sensor_4=tip(9)
         TactileRegion("thumb_tip", "right_thumb_force_sensor_4", (3, 3), 9),
-        TactileRegion("thumb_nail", "right_thumb_force_sensor_1", (12, 8), 96),
-        TactileRegion("thumb_middle", "right_thumb_force_sensor_3", (3, 3), 9),
-        TactileRegion("thumb_pad", "right_thumb_force_sensor_2", (12, 8), 96),
+        TactileRegion("thumb_nail", "right_thumb_force_sensor_3", (12, 8), 96),
+        TactileRegion("thumb_middle", "right_thumb_force_sensor_2", (3, 3), 9),
+        TactileRegion("thumb_pad", "right_thumb_force_sensor_1", (12, 8), 96),
 
         # Palm (112 taxels) - on palm force sensor
         TactileRegion("palm", "right_palm_force_sensor", (14, 8), 112),
@@ -114,23 +115,37 @@ class TactileMapper:
         rows, cols = grid_shape
 
         # Different projection strategies for different regions
-        if 'tip' in region_name or 'middle' in region_name:
-            # For tips: use XY projection (looking down from above)
+        # Match Qt visualizer conventions from viz_qt.py and test_spatial_tactile.py
+        # Hardware uses row-major: index = row * cols + col
+        # row 0 = top/proximal, row N = bottom/distal
+        # col 0 = left, col M = right
+
+        flip_rows = False
+        flip_cols = False
+
+        if 'tip' in region_name:
+            # Tips: XY projection, small 3x3 grid
             coords = points[:, :2]  # X, Y
+            flip_rows = True  # Y increases up but row 0 is top
+        elif 'middle' in region_name:
+            # Middle section (thumb only): XY projection
+            coords = points[:, :2]  # X, Y
+            flip_rows = True
         elif 'nail' in region_name:
-            # For nails: use cylindrical coordinates around Z axis
-            # Angle around Z + Z height
+            # Nails: cylindrical projection - angle around finger, Z along length
             angles = np.arctan2(points[:, 1], points[:, 0])
             z_vals = points[:, 2]
             coords = np.column_stack([angles, z_vals])
+            flip_rows = True  # Z increases up but row 0 is proximal
         elif 'pad' in region_name:
-            # For pads: use Y-Z projection (side view)
+            # Pads: YZ projection (side view of finger)
             coords = points[:, 1:3]  # Y, Z
+            flip_rows = True  # Z increases up but row 0 is proximal
         elif 'palm' in region_name:
-            # For palm: use X-Y projection
+            # Palm: XY projection
             coords = points[:, :2]  # X, Y
+            flip_rows = True
         else:
-            # Default: use first two coordinates
             coords = points[:, :2]
 
         # Normalize coordinates to [0, 1] range
@@ -142,10 +157,17 @@ class TactileMapper:
         coords_normalized = (coords - coord_min) / coord_range
 
         # Map to grid indices
-        row_indices = np.clip((coords_normalized[:, 1] * rows).astype(int), 0, rows - 1)
         col_indices = np.clip((coords_normalized[:, 0] * cols).astype(int), 0, cols - 1)
+        row_indices = np.clip((coords_normalized[:, 1] * rows).astype(int), 0, rows - 1)
 
-        # Convert to linear taxel index
+        # Apply flips to match hardware orientation
+        if flip_rows:
+            row_indices = rows - 1 - row_indices
+        if flip_cols:
+            col_indices = cols - 1 - col_indices
+
+        # Convert to linear taxel index using row-major ordering
+        # This matches hardware: index = row * cols + col
         taxel_indices = row_indices * cols + col_indices
 
         return taxel_indices
@@ -275,6 +297,7 @@ class TactileMapper:
         if hasattr(touch_msg, 'index'):
             extract_finger_data(touch_msg.index, 'index')
         if hasattr(touch_msg, 'thumb'):
+            # Thumb - no remapping needed, message fields match hardware
             extract_finger_data(touch_msg.thumb, 'thumb')
 
         # Palm data
