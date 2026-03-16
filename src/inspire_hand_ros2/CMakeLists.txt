@@ -34,6 +34,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 install(PROGRAMS
   inspire_hand_ros2/inspire_hand_node.py
   inspire_hand_ros2/visualizer.py
+  inspire_hand_ros2/tactile_pointcloud_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -44,6 +45,9 @@ install(FILES
   inspire_hand_ros2/grasp_controller.py
   inspire_hand_ros2/viz_data.py
   inspire_hand_ros2/viz_qt.py
+  inspire_hand_ros2/mesh_sampler.py
+  inspire_hand_ros2/kinematics_solver.py
+  inspire_hand_ros2/tactile_mapper.py
   inspire_hand_ros2/__init__.py
   DESTINATION lib/${PROJECT_NAME}
 )

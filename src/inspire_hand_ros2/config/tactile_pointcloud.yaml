@@ -1,0 +1,26 @@
+tactile_pointcloud_node:
+  ros__parameters:
+    # URDF configuration (auto-detected if empty)
+    urdf_path: ''
+    package_path: ''
+
+    # Publishing configuration
+    publish_rate: 50.0  # Hz
+    frame_id: 'base_footprint'
+
+    # Colormap settings (hardware range: 0-4095, 12-bit ADC)
+    colormap_min: 0.0
+    colormap_max: 4095.0
+
+    # Point cloud density: points per tactile sensor (taxel)
+    # 16 = default (matches 16-bit/2-byte taxel data format)
+    # Higher = more detailed visualization, lower = better performance
+    points_per_taxel: 16
+
+    # Topic configuration
+    tactile_topic: '/inspire_hand/inspire_hand_node/touch'
+    joint_state_topic: '/joint_states'
+    hand_state_topic: '/inspire_hand/inspire_hand_node/state'
+
+    # Set to true to use InspireHandState, false to use standard JointState
+    use_hand_state: true

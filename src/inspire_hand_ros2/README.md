@@ -12,7 +12,9 @@ ROS2 Humble wrapper for the **RH56DFTP Dexterous Hand** by Beijing Inspire-Robot
   - 6-state grasp controller
 - **Grasp Presets**: Power, pinch, precision, cylindrical, hook
 - **Action Server**: Real-time feedback during grasp operations
-- **Qt Visualizer**: Real-time tactile heatmaps and state curves
+- **Dual Visualization**:
+  - 2D Qt heatmaps for real-time tactile monitoring
+  - 3D point cloud visualization in RViz (~20k points, 16 pts/taxel)
 
 ## Hardware Requirements
 
@@ -113,14 +115,28 @@ ros2 topic echo /inspire_hand/inspire_hand_node/touch
 ros2 topic echo /inspire_hand/inspire_hand_node/grasp_status
 ```
 
-### Visualizer
+### Visualizers
 
-Launch the Qt visualizer to see real-time tactile heatmaps and state curves:
+**2D Qt Visualizer** - Real-time tactile heatmaps and state curves:
 
 ```bash
 # In a separate terminal (while node is running)
 ros2 run inspire_hand_ros2 visualizer.py
 ```
+
+**3D Tactile Point Cloud** - Spatial visualization in RViz:
+
+![Tactile Point Cloud](doc/hand_tactile_pcl_random.png)
+
+```bash
+# With real hardware
+ros2 launch inspire_hand_ros2 tactile_pointcloud.launch.py
+
+# Standalone simulation
+ros2 launch inspire_hand_description display_tactile.launch.py
+```
+
+See [Tactile Point Cloud Documentation](../inspire_hand_description/README.md#tactile-point-cloud-visualization) for details.
 
 ## ROS2 Interface
 
@@ -403,16 +419,143 @@ class GraspExample(Node):
 
 ## Tactile Sensor Layout
 
-Each finger has three tactile regions:
-- **Tip**: 3×3 = 9 taxels
-- **Nail/Top**: 12×8 = 96 taxels
-- **Pad**: 10×8 = 80 taxels (thumb: 12×8 = 96)
+**Hardware Data Format**:
+- Each taxel: 16-bit integer (2 bytes, little-endian)
+- Value range: 0-4095 (12-bit ADC)
 
-Thumb has an additional **middle** region (3×3 = 9 taxels).
+**Sensor Distribution** (1062 total):
 
-Palm: 8×14 = 112 taxels
+| Region | Grid | Taxels | Bytes |
+|--------|------|--------|-------|
+| Finger Tip | 3×3 | 9 | 18 |
+| Finger Nail | 12×8 | 96 | 192 |
+| Finger Pad | 10×8 | 80 | 160 |
+| Thumb Tip | 3×3 | 9 | 18 |
+| Thumb Nail | 12×8 | 96 | 192 |
+| Thumb Middle | 3×3 | 9 | 18 |
+| Thumb Pad | 12×8 | 96 | 192 |
+| Palm | 8×14 | 112 | 224 |
 
-**Total: 1062 tactile sensors**
+**Per-finger totals**:
+- Index/Middle/Ring/Little: 185 taxels (370 bytes)
+- Thumb: 210 taxels (420 bytes)
+- Palm: 112 taxels (224 bytes)
+
+**Grand Total: 4×185 + 210 + 112 = 1062 taxels (2124 bytes)**
+
+## Tactile Point Cloud Architecture
+
+The 3D tactile visualization is built from three modules that work together:
+
+```
+┌─────────────────┐     ┌───────────────────┐     ┌────────────────┐
+│  mesh_sampler   │────►│ kinematics_solver │────►│ tactile_mapper │
+│                 │     │                   │     │                │
+│ Load STL meshes │     │ Compute FK from   │     │ Map 1062 taxels│
+│ Sample points   │     │ joint angles      │     │ to point colors│
+└─────────────────┘     └───────────────────┘     └────────────────┘
+        │                        │                        │
+        ▼                        ▼                        ▼
+   MeshPoints              4x4 Transforms            RGB Colors
+   (local frame)           (world frame)           (per point)
+```
+
+### mesh_sampler.py
+
+**Purpose**: Load URDF, extract STL meshes, sample points uniformly on surfaces.
+
+**How it works**:
+1. Parses URDF to find all links with visual meshes
+2. Resolves `package://` URIs to absolute file paths
+3. Loads each STL file using `trimesh`
+4. Samples points using `trimesh.sample.sample_surface_even()`
+5. Returns points in each link's local coordinate frame
+
+**Key configuration**:
+- `points_per_taxel`: Points sampled per tactile sensor (default: 16)
+- Tactile meshes: `num_taxels × points_per_taxel` points
+- Non-tactile meshes: 200 points (gray, for context)
+
+**Output**: `Dict[link_name, MeshPoints]` where each `MeshPoints` contains:
+- `points_local`: (N, 3) array of XYZ positions
+- `normals_local`: (N, 3) array of surface normals
+- `tactile_region`: Region name (e.g., "thumb_tip") or None
+
+### kinematics_solver.py
+
+**Purpose**: Compute forward kinematics to transform points from link frames to world frame.
+
+**How it works**:
+1. Parses URDF to build kinematic tree (joints, origins, axes)
+2. Maps 6-DOF `angle_actual` (0-1000) to URDF joint angles (radians)
+3. Handles mimic joints (distal joints follow proximal)
+4. Computes 4×4 transform matrices using DFS from `base_footprint`
+
+**Joint mapping** (InspireHandState index → URDF joint):
+| DOF | Finger | URDF Joint |
+|-----|--------|------------|
+| 0 | Little | `right_little_1_joint` |
+| 1 | Ring | `right_ring_1_joint` |
+| 2 | Middle | `right_middle_1_joint` |
+| 3 | Index | `right_index_1_joint` |
+| 4 | Thumb bend | `right_thumb_2_joint` |
+| 5 | Thumb rotate | `right_thumb_1_joint` |
+
+**Mimic joints** (computed automatically):
+- `thumb_3 = thumb_2 × 0.8392`
+- `thumb_4 = thumb_3 × 0.891`
+- `finger_2 = finger_1 × 1.0843` (for all fingers)
+
+**Output**: `Dict[link_name, np.ndarray(4,4)]` - transform matrices
+
+### tactile_mapper.py
+
+**Purpose**: Map 1062 tactile sensor values to mesh point colors.
+
+**How it works**:
+1. **Initialization**: Divides each tactile mesh into grid zones matching sensor layout
+   - Tips (3×3): 9 zones using XY projection
+   - Nails (12×8): 96 zones using cylindrical projection (angle + Z)
+   - Pads (10×8): 80 zones using YZ projection
+   - Palm (8×14): 112 zones using XY projection
+
+2. **Runtime**: For each tactile message:
+   - Looks up which zone each mesh point belongs to
+   - Gets tactile value for that zone's sensor
+   - Converts value to RGB using heatmap
+
+**Color mapping** (0-4095 → RGB):
+```
+Value    Color    Normalized
+0        Blue     0%
+1024     Cyan     25%
+2048     Green    50%
+3072     Yellow   75%
+4095     Red      100%
+```
+
+**Key insight**: Each of the 1062 sensors maps to ~16 mesh points, giving equal visual weight per sensor regardless of physical size.
+
+### tactile_pointcloud_node.py
+
+**Purpose**: ROS2 node coordinating all components at 50 Hz.
+
+**Data flow**:
+1. Subscribe to `/inspire_hand/inspire_hand_node/state` (joint angles)
+2. Subscribe to `/inspire_hand/inspire_hand_node/touch` (tactile data)
+3. Compute FK transforms for current joint angles
+4. Transform all mesh points to world frame
+5. Apply tactile colors to points
+6. Publish `PointCloud2` to `/inspire_hand/tactile_pointcloud`
+7. Publish `JointState` to `/joint_states` (for RViz robot model)
+
+**Parameters**:
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `points_per_taxel` | 16 | Sampling density |
+| `colormap_min` | 0 | Min tactile value |
+| `colormap_max` | 4095 | Max tactile value |
+| `publish_rate` | 50.0 | Hz |
 
 ## Troubleshooting
 
@@ -461,11 +604,3 @@ ros2 topic hz /inspire_hand/inspire_hand_node/touch
 
 1. **Hardware**: RH56DFTP User Manual v1.0.0, Beijing Inspire-Robots
 2. **Grasp Algorithm**: Romano, Hsiao, Niemeyer, Chitta, Kuchenbecker, "Human-Inspired Robotic Grasp Control With Tactile Sensing", IEEE Transactions on Robotics, 2011
-
-## License
-
-MIT License
-
-## Authors
-
-- Developed with Claude Code
