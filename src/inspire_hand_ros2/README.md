@@ -443,6 +443,26 @@ class GraspExample(Node):
 
 **Grand Total: 4×185 + 210 + 112 = 1062 taxels (2124 bytes)**
 
+### Hardware Indexing
+
+**Standard (all fingers/thumb):** Row-major ordering
+```
+index = row * cols + col
+```
+- Data Point 1 → row 0, col 0
+- Data Point 2 → row 0, col 1
+- Data Point N → row 0, col (N-1)
+
+**Palm (special case):** Column-major with reversed rows
+```
+index = col * 8 + (7 - row)
+```
+- Data Point 1 → row 7, col 0 (bottom-left)
+- Data Point 8 → row 0, col 0 (top-left)
+- Data Point 9 → row 7, col 1 (bottom, next column)
+
+This unique indexing requires special handling in the point cloud mapper.
+
 ## Tactile Point Cloud Architecture
 
 The 3D tactile visualization is built from three modules that work together:
@@ -513,16 +533,30 @@ The 3D tactile visualization is built from three modules that work together:
 **Purpose**: Map 1062 tactile sensor values to mesh point colors.
 
 **How it works**:
-1. **Initialization**: Divides each tactile mesh into grid zones matching sensor layout
-   - Tips (3×3): 9 zones using XY projection
-   - Nails (12×8): 96 zones using cylindrical projection (angle + Z)
-   - Pads (10×8): 80 zones using YZ projection
-   - Palm (8×14): 112 zones using XY projection
 
-2. **Runtime**: For each tactile message:
-   - Looks up which zone each mesh point belongs to
-   - Gets tactile value for that zone's sensor
-   - Converts value to RGB using heatmap
+1. **Initialization**: Divides each tactile mesh into grid zones matching hardware sensor layout
+   - All regions use XY projection in local link frame: `coords = points[:, [0, 1]]`
+   - X axis (left-right) → columns, Y axis (proximal-distal) → rows
+   - Applies `flip_rows=True` to all regions (row 0 = proximal/top)
+
+2. **Grid mapping**: Normalizes mesh coordinates to [0, 1] and maps to grid indices
+   ```python
+   col_indices = normalized_x * cols
+   row_indices = (rows - 1) - (normalized_y * rows)  # Flipped
+   ```
+
+3. **Indexing formulas**:
+   - **Fingers/Thumb** (row-major): `index = row * cols + col`
+   - **Palm** (column-major): `index = col * rows + row`
+
+4. **Special cases**:
+   - **Palm**: Uses column-major indexing (see Hardware Indexing above)
+   - **Thumb middle**: Applies `flip_cols=True` due to URDF joint rotation mirroring X axis
+
+5. **Runtime**: For each tactile message
+   - Looks up which grid cell each mesh point belongs to
+   - Gets tactile value for that cell's sensor
+   - Converts to RGB color using heatmap (Blue=0 → Red=4095)
 
 **Color mapping** (0-4095 → RGB):
 ```

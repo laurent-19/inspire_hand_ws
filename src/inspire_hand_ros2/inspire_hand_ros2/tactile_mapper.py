@@ -52,7 +52,8 @@ class TactileMapper:
         TactileRegion("thumb_pad", "right_thumb_force_sensor_1", (12, 8), 96),
 
         # Palm (112 taxels) - on palm force sensor
-        TactileRegion("palm", "right_palm_force_sensor", (14, 8), 112),
+        # Hardware: 8 rows × 14 columns, column-major with reversed rows
+        TactileRegion("palm", "right_palm_force_sensor", (8, 14), 112),
     ]
 
     def __init__(self, mesh_points: Dict, colormap_min: float = 0.0, colormap_max: float = 4095.0):
@@ -122,29 +123,33 @@ class TactileMapper:
 
         flip_rows = False
         flip_cols = False
+        is_palm = False  # Initialize for all regions
 
         if 'tip' in region_name:
             # Tips: XY projection, small 3x3 grid
-            coords = points[:, :2]  # X, Y
-            flip_rows = True  # Y increases up but row 0 is top
-        elif 'middle' in region_name:
-            # Middle section (thumb only): XY projection
-            coords = points[:, :2]  # X, Y
+            coords = points[:, [0, 1]]  # X, Y
             flip_rows = True
+        elif 'middle' in region_name and 'thumb' in region_name:
+            # Thumb middle section: XY projection
+            coords = points[:, [0, 1]]  # X, Y
+            flip_rows = True
+            flip_cols = True  # Thumb middle has mirrored X axis
         elif 'nail' in region_name:
-            # Nails: cylindrical projection - angle around finger, Z along length
-            angles = np.arctan2(points[:, 1], points[:, 0])
-            z_vals = points[:, 2]
-            coords = np.column_stack([angles, z_vals])
-            flip_rows = True  # Z increases up but row 0 is proximal
-        elif 'pad' in region_name:
-            # Pads: YZ projection (side view of finger)
-            coords = points[:, 1:3]  # Y, Z
-            flip_rows = True  # Z increases up but row 0 is proximal
-        elif 'palm' in region_name:
-            # Palm: XY projection
-            coords = points[:, :2]  # X, Y
+            # Nails: XY projection (12 rows × 8 cols)
+            coords = points[:, [0, 1]]  # X, Y
             flip_rows = True
+        elif 'pad' in region_name:
+            # Pads: XY projection (10 rows × 8 cols)
+            coords = points[:, [0, 1]]  # X, Y
+            flip_rows = True
+        elif 'palm' in region_name:
+            # Palm: special handling for 8 rows × 14 columns
+            # Hardware uses column-major with reversed rows:
+            # index = col * 8 + (7 - row)
+            # Physical orientation: cols span left-right, rows span proximal-distal
+            coords = points[:, :2]  # X (left-right), Y (proximal-distal)
+            flip_rows = True  # Rows are reversed in hardware
+            is_palm = True
         else:
             coords = points[:, :2]
 
@@ -166,9 +171,14 @@ class TactileMapper:
         if flip_cols:
             col_indices = cols - 1 - col_indices
 
-        # Convert to linear taxel index using row-major ordering
-        # This matches hardware: index = row * cols + col
-        taxel_indices = row_indices * cols + col_indices
+        # Convert to linear taxel index
+        if is_palm:
+            # Palm uses column-major ordering: index = col * rows + row
+            # (rows=8, so each column occupies 8 consecutive indices)
+            taxel_indices = col_indices * rows + row_indices
+        else:
+            # Fingers use row-major ordering: index = row * cols + col
+            taxel_indices = row_indices * cols + col_indices
 
         return taxel_indices
 

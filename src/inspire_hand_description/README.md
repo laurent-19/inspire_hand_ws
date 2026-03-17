@@ -109,7 +109,7 @@ The hand has **1062 tactile sensors** distributed across force sensor pads:
 - **Total: 210 taxels**
 
 **Palm:**
-- 14×8 = 112 taxels (on `palm_force_sensor`)
+- 8×14 = 112 taxels (on `palm_force_sensor`, column-major layout)
 
 **Grand Total: 4×185 + 210 + 112 = 1062 taxels**
 

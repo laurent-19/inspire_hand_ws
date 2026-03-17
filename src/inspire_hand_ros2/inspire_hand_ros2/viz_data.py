@@ -24,7 +24,7 @@ data_sheet = [
     ("Thumb nail", 4498, 192, (12, 8), "fingerfive_top_touch"),
     ("Thumb middle", 4690, 18, (3, 3), "fingerfive_middle_touch"),
     ("Thumb pad", 4708, 192, (12, 8), "fingerfive_palm_touch"),
-    ("Palm", 4900, 224, (14, 8), "palm_touch")
+    ("Palm", 4900, 224, (8, 14), "palm_touch")  # Hardware: 8 rows × 14 cols, column-major
 ]
 
 status_codes = {

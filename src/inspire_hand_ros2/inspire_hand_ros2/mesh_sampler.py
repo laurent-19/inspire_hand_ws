@@ -63,7 +63,7 @@ class MeshSampler:
         'right_little_force_sensor_2': ('little_nail', 96),
         'right_little_force_sensor_1': ('little_pad', 80),
 
-        # Palm (112 taxels, 8×14 grid)
+        # Palm (112 taxels, 8 rows × 14 cols, column-major)
         'right_palm_force_sensor': ('palm', 112),
     }
 
