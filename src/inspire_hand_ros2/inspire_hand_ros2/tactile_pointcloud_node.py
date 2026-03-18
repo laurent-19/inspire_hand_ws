@@ -185,13 +185,15 @@ class TactilePointCloudNode(Node):
                 if name in self.kinematics_solver.DOF_TO_JOINT.values():
                     joint_angles[name] = msg.position[i]
 
-            # Convert to angle_actual format (radians to 0-1000)
+            # Convert to angle_actual format (radians to raw value)
             # This is inverse of kinematics_solver.angle_actual_to_radians
-            # Inverted: 0 rad (open) → 1000, π/2 rad (closed) → 0
+            # Uses per-joint limits and zero offsets
             for dof_idx, joint_name in self.kinematics_solver.DOF_TO_JOINT.items():
                 if joint_name in joint_angles:
                     radians = joint_angles[joint_name]
-                    angle_actual = int(1000.0 - (radians / (np.pi / 2.0)) * 1000.0)
+                    upper_limit = self.kinematics_solver.DOF_JOINT_LIMITS.get(dof_idx, np.pi / 2.0)
+                    zero_offset = self.kinematics_solver.DOF_ZERO_OFFSET.get(dof_idx, 1000)
+                    angle_actual = int(zero_offset - (radians / upper_limit) * zero_offset)
                     self.latest_joint_angles[dof_idx] = angle_actual
 
             self.last_update_time = self.get_clock().now()
@@ -298,12 +300,12 @@ class TactilePointCloudNode(Node):
         msg = JointState()
         msg.header.stamp = self.get_clock().now().to_msg()
 
-        # Convert angle_actual to radians
+        # Convert angle_actual to radians using per-joint limits
         joint_positions = {}
         for dof_idx, joint_name in self.kinematics_solver.DOF_TO_JOINT.items():
             if dof_idx < len(angle_actual):
                 joint_positions[joint_name] = self.kinematics_solver.angle_actual_to_radians(
-                    angle_actual[dof_idx]
+                    angle_actual[dof_idx], dof_idx
                 )
 
         # Add mimic joints

@@ -22,6 +22,27 @@ class KinematicsSolver:
         5: 'right_thumb_1_joint',    # Thumb rotation
     }
 
+    # Joint limits from URDF (radians) - indexed by DOF
+    DOF_JOINT_LIMITS = {
+        0: 1.4381,   # little_1_joint
+        1: 1.4381,   # ring_1_joint
+        2: 1.4381,   # middle_1_joint
+        3: 1.4381,   # index_1_joint
+        4: 0.62,     # thumb_2_joint (bend)
+        5: 1.658,    # thumb_1_joint (rotation)
+    }
+
+    # Zero-angle calibration offsets (raw value when joint is at 0 radians)
+    # These are the actual "fully open" values from hardware initialization
+    DOF_ZERO_OFFSET = {
+        0: 998,    # little
+        1: 998,    # ring
+        2: 998,    # middle
+        3: 998,    # index
+        4: 1000,   # thumb bend
+        5: 985,    # thumb rotation
+    }
+
     # Mimic joint definitions (child_joint: (parent_joint, multiplier))
     MIMIC_JOINTS = {
         'right_thumb_3_joint': ('right_thumb_2_joint', 0.8392),
@@ -158,15 +179,29 @@ class KinematicsSolver:
 
         return resolved
 
-    def angle_actual_to_radians(self, angle_actual: int) -> float:
+    def angle_actual_to_radians(self, angle_actual: int, dof_idx: int = None) -> float:
         """
-        Convert angle_actual (0-1000) to radians.
+        Convert angle_actual to radians using per-joint limits and calibration.
 
-        This is an empirical mapping that may need calibration.
-        Actual mapping: 1000 = fully open (0 rad) and 0 = fully closed (~1.57 rad)
+        Args:
+            angle_actual: Raw hardware value
+            dof_idx: DOF index (0-5) to look up correct joint limit and zero offset
+
+        Returns:
+            Joint angle in radians
+
+        Mapping: zero_offset = 0 rad (open), 0 = upper_limit rad (closed)
         """
-        # Inverted linear mapping: 1000 units (open) → 0 rad, 0 units (closed) → π/2 radians
-        return ((1000.0 - angle_actual) / 1000.0) * (np.pi / 2.0)
+        # Get joint-specific limit and zero offset
+        if dof_idx is not None and dof_idx in self.DOF_JOINT_LIMITS:
+            upper_limit = self.DOF_JOINT_LIMITS[dof_idx]
+            zero_offset = self.DOF_ZERO_OFFSET.get(dof_idx, 1000)
+        else:
+            upper_limit = np.pi / 2.0
+            zero_offset = 1000
+
+        # Linear mapping: zero_offset → 0 rad, 0 → upper_limit
+        return ((zero_offset - angle_actual) / zero_offset) * upper_limit
 
     def compute_all_transforms(self,
                                joint_positions: Optional[Dict[str, float]] = None,
@@ -187,7 +222,8 @@ class KinematicsSolver:
             joint_positions = {}
             for dof_idx, joint_name in self.DOF_TO_JOINT.items():
                 if dof_idx < len(angle_actual):
-                    joint_positions[joint_name] = self.angle_actual_to_radians(angle_actual[dof_idx])
+                    joint_positions[joint_name] = self.angle_actual_to_radians(
+                        angle_actual[dof_idx], dof_idx)
 
         # Default to zero positions if not provided
         if joint_positions is None:
