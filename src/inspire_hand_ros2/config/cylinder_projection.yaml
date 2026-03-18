@@ -1,0 +1,23 @@
+cylinder_projection_node:
+  ros__parameters:
+    # Frame configuration
+    base_frame: 'base_footprint'
+    cylinder_frame: 'right_palm_force_sensor'
+
+    # Cylinder geometry
+    cylinder_radius: 0.033       # meters (3.3 cm)
+    cylinder_height: 0.30        # meters (30 cm)
+    cylinder_offset: 0.0         # meters (additional offset beyond radius; 0 = edge at palm sensor)
+    max_distance: 0.10           # Filter points beyond this distance from axis (meters)
+
+    # Publishing configuration
+    publish_rate: 50.0           # Hz (match tactile pointcloud rate)
+    publish_reference: true      # Publish reference cylinder visualization
+
+    # Topic names
+    input_topic: '/inspire_hand/tactile_pointcloud'
+    output_topic: '/cylinder_projection/projected_pointcloud'
+    reference_topic: '/cylinder_projection/reference_cylinder'
+
+    # Reference cylinder visualization
+    reference_points: 1000       # Number of points for reference cylinder mesh

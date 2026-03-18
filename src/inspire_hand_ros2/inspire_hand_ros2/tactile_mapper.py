@@ -229,7 +229,7 @@ class TactileMapper:
         """Pack RGB values into a single 32-bit integer."""
         return (r << 16) | (g << 8) | b
 
-    def apply_tactile_colors(self, tactile_data: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def apply_tactile_colors(self, tactile_data: Dict[str, np.ndarray]) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
         """
         Apply tactile sensor colors to mesh points.
 
@@ -238,9 +238,12 @@ class TactileMapper:
                          Example: {'little_tip': array[9], 'little_nail': array[96], ...}
 
         Returns:
-            Dictionary mapping link names to RGB color arrays (packed uint32)
+            Tuple of (link_colors, link_intensities):
+            - link_colors: RGB colors (packed uint32)
+            - link_intensities: Raw tactile values (0-4095) or NaN
         """
         link_colors = {}
+        link_intensities = {}
 
         for link_name, mapping in self.point_to_taxel.items():
             region = mapping['region']
@@ -249,13 +252,17 @@ class TactileMapper:
 
             # Get tactile values for this region
             if region.name not in tactile_data:
-                # No data - use default blue color
+                # No data - use default blue color + NaN intensity
                 colors = np.full(num_points, self.pack_rgb(0, 0, 255), dtype=np.uint32)
+                intensities = np.full(num_points, np.nan, dtype=np.float32)
             else:
                 tactile_values = tactile_data[region.name]
 
                 # Map each point to its corresponding tactile value
                 point_values = tactile_values[taxel_indices]
+
+                # Preserve raw values as intensity
+                intensities = point_values.astype(np.float32)
 
                 # Convert to RGB
                 colors = np.array([
@@ -264,6 +271,7 @@ class TactileMapper:
                 ], dtype=np.uint32)
 
             link_colors[link_name] = colors
+            link_intensities[link_name] = intensities
 
         # Add default colors for non-tactile links
         for link_name, mesh in self.mesh_points.items():
@@ -271,8 +279,9 @@ class TactileMapper:
                 # Gray color for non-tactile parts
                 num_points = len(mesh.points_local)
                 link_colors[link_name] = np.full(num_points, self.pack_rgb(128, 128, 128), dtype=np.uint32)
+                link_intensities[link_name] = np.full(num_points, np.nan, dtype=np.float32)
 
-        return link_colors
+        return link_colors, link_intensities
 
     def parse_tactile_message(self, touch_msg) -> Dict[str, np.ndarray]:
         """

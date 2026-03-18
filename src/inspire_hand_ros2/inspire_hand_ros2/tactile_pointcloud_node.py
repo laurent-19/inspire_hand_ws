@@ -209,12 +209,13 @@ class TactilePointCloudNode(Node):
             angle_actual=joint_angles
         )
 
-        # Apply tactile colors
-        link_colors = self.tactile_mapper.apply_tactile_colors(tactile_data)
+        # Apply tactile colors - now returns tuple
+        link_colors, link_intensities = self.tactile_mapper.apply_tactile_colors(tactile_data)
 
         # Build point cloud
         points = []
         colors = []
+        intensities = []
 
         for link_name, mesh_points in self.mesh_cache.items():
             if link_name not in link_transforms:
@@ -235,6 +236,12 @@ class TactilePointCloudNode(Node):
                 # Default gray
                 colors.append(np.full(len(points_local), 0x808080, dtype=np.uint32))
 
+            # Get intensities
+            if link_name in link_intensities:
+                intensities.append(link_intensities[link_name])
+            else:
+                intensities.append(np.full(len(points_local), np.nan, dtype=np.float32))
+
         # Concatenate all points and colors
         if len(points) == 0:
             self.get_logger().warn("No points to publish")
@@ -242,45 +249,50 @@ class TactilePointCloudNode(Node):
 
         all_points = np.vstack(points).astype(np.float32)
         all_colors = np.concatenate(colors).astype(np.uint32)
+        all_intensities = np.concatenate(intensities).astype(np.float32)
 
         # Create PointCloud2 message
-        pc_msg = self.create_pointcloud2(all_points, all_colors)
+        pc_msg = self.create_pointcloud2(all_points, all_colors, all_intensities)
         self.pc_pub.publish(pc_msg)
 
         # Publish joint states for RViz robot model
         self.publish_joint_states(joint_angles)
 
-    def create_pointcloud2(self, points: np.ndarray, colors: np.ndarray) -> PointCloud2:
-        """Create PointCloud2 message with RGB colors."""
+    def create_pointcloud2(self, points: np.ndarray, colors: np.ndarray,
+                           intensities: np.ndarray) -> PointCloud2:
+        """Create PointCloud2 message with RGB colors and intensity."""
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = self.frame_id
 
-        # Define fields
+        # Define fields - add intensity
         fields = [
             PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
             PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
             PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
             PointField(name='rgb', offset=12, datatype=PointField.UINT32, count=1),
+            PointField(name='intensity', offset=16, datatype=PointField.FLOAT32, count=1),
         ]
 
         # Pack data
         num_points = len(points)
-        point_step = 16  # 4 bytes * 4 fields
+        point_step = 20  # 4 bytes * 5 fields
         row_step = point_step * num_points
 
-        # Create structured array
+        # Create structured array - add intensity field
         data = np.zeros(num_points, dtype=[
             ('x', np.float32),
             ('y', np.float32),
             ('z', np.float32),
-            ('rgb', np.uint32)
+            ('rgb', np.uint32),
+            ('intensity', np.float32),
         ])
 
         data['x'] = points[:, 0]
         data['y'] = points[:, 1]
         data['z'] = points[:, 2]
         data['rgb'] = colors
+        data['intensity'] = intensities
 
         msg = PointCloud2()
         msg.header = header

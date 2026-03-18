@@ -35,6 +35,8 @@ install(PROGRAMS
   inspire_hand_ros2/inspire_hand_node.py
   inspire_hand_ros2/visualizer.py
   inspire_hand_ros2/tactile_pointcloud_node.py
+  inspire_hand_ros2/cylinder_projection_node.py
+  inspire_hand_ros2/cylinder_unwrap_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
