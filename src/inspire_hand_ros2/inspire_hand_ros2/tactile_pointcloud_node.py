@@ -323,6 +323,11 @@ class TactilePointCloudNode(Node):
         # Add mimic joints
         joint_positions = self.kinematics_solver._resolve_mimic_joints(joint_positions)
 
+        # thumb_3 and thumb_4 are fixed at 0 rad - their URDF mesh zero pose
+        # already matches the real hardware open position (not mimicked)
+        joint_positions['right_thumb_3_joint'] = 0.0
+        joint_positions['right_thumb_4_joint'] = 0.0
+
         # Populate message
         msg.name = list(joint_positions.keys())
         msg.position = [float(v) for v in joint_positions.values()]  # Convert numpy floats to Python floats

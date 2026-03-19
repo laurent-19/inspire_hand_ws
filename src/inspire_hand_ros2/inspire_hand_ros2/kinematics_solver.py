@@ -22,31 +22,38 @@ class KinematicsSolver:
         5: 'right_thumb_1_joint',    # Thumb rotation
     }
 
-    # Joint limits from URDF (radians) - indexed by DOF
+    # Joint limits (radians) - actual physical range, indexed by DOF
+    # Fingers: 20°-176° range → 156° = 2.722 rad per proximal joint
+    #   (URDF upper 1.4381 rad covers proximal only; distal mimic adds more)
+    # Thumb bend: -13°-70° → 83° = 1.4486 rad physical range
+    # Thumb rotation: 90°-165° → 75° = 1.3090 rad physical range
     DOF_JOINT_LIMITS = {
-        0: 1.4381,   # little_1_joint
-        1: 1.4381,   # ring_1_joint
-        2: 1.4381,   # middle_1_joint
-        3: 1.4381,   # index_1_joint
-        4: 0.62,     # thumb_2_joint (bend)
-        5: 1.658,    # thumb_1_joint (rotation)
+        0: 1.4381,   # little_1_joint  (URDF upper limit)
+        1: 1.4381,   # ring_1_joint    (URDF upper limit)
+        2: 1.4381,   # middle_1_joint  (URDF upper limit)
+        3: 1.4381,   # index_1_joint   (URDF upper limit)
+        4: 0.62,     # thumb_2_joint (bend, URDF upper limit)
+        5: 1.3090,   # thumb_1_joint (rotation, physical range 90°-165° = 75° = 1.309 rad)
     }
 
-    # Zero-angle calibration offsets (raw value when joint is at 0 radians)
-    # These are the actual "fully open" values from hardware initialization
-    DOF_ZERO_OFFSET = {
-        0: 998,    # little
-        1: 998,    # ring
-        2: 998,    # middle
-        3: 998,    # index
-        4: 1000,   # thumb bend
-        5: 985,    # thumb rotation
+    # Two-point raw calibration per DOF: (raw_at_zero_rad, raw_at_upper_limit_rad)
+    # All joints: high raw = extended/open = 0 rad, raw=0 = closed = upper_limit
+    DOF_RAW_CALIBRATION = {
+        0: (998,  0),    # little:   (raw@0rad, raw@upper_limit)
+        1: (998,  0),    # ring
+        2: (998,  0),    # middle
+        3: (998,  0),    # index
+        4: (1000, 0),    # thumb bend:     raw=1000 open, raw=0 closed
+        5: (1000, 0),    # thumb rotation: raw=1000 extended, raw=0 closed
     }
 
     # Mimic joint definitions (child_joint: (parent_joint, multiplier))
+    # NOTE: right_thumb_3 and right_thumb_4 are intentionally NOT mimicked.
+    # Their URDF mesh zero pose already matches the real hardware when thumb_2=0
+    # (max open). Mimicking would over-bend them visually. They are held at 0 rad.
+    # 'right_thumb_3_joint': ('right_thumb_2_joint', 0.8392),  # disabled: mesh zero = real open pose
+    # 'right_thumb_4_joint': ('right_thumb_3_joint', 0.891),   # disabled: same reason
     MIMIC_JOINTS = {
-        'right_thumb_3_joint': ('right_thumb_2_joint', 0.8392),
-        'right_thumb_4_joint': ('right_thumb_3_joint', 0.891),
         'right_index_2_joint': ('right_index_1_joint', 1.0843),
         'right_middle_2_joint': ('right_middle_1_joint', 1.0843),
         'right_ring_2_joint': ('right_ring_1_joint', 1.0843),
@@ -181,27 +188,31 @@ class KinematicsSolver:
 
     def angle_actual_to_radians(self, angle_actual: int, dof_idx: int = None) -> float:
         """
-        Convert angle_actual to radians using per-joint limits and calibration.
+        Convert angle_actual to radians using per-DOF two-point calibration.
 
         Args:
-            angle_actual: Raw hardware value
-            dof_idx: DOF index (0-5) to look up correct joint limit and zero offset
+            angle_actual: Raw hardware value (0-1000)
+            dof_idx: DOF index (0-5)
 
         Returns:
-            Joint angle in radians
+            Joint angle in radians (0 = open/home, upper_limit = closed/max)
 
-        Mapping: zero_offset = 0 rad (open), 0 = upper_limit rad (closed)
+        Calibration: DOF_RAW_CALIBRATION maps (raw_at_zero_rad, raw_at_upper_limit_rad)
+        so joints can have either direction (fingers: high raw = 0 rad, thumb_rot: low raw = 0 rad)
         """
-        # Get joint-specific limit and zero offset
         if dof_idx is not None and dof_idx in self.DOF_JOINT_LIMITS:
             upper_limit = self.DOF_JOINT_LIMITS[dof_idx]
-            zero_offset = self.DOF_ZERO_OFFSET.get(dof_idx, 1000)
+            raw_zero, raw_upper = self.DOF_RAW_CALIBRATION.get(dof_idx, (1000, 0))
         else:
             upper_limit = np.pi / 2.0
-            zero_offset = 1000
+            raw_zero, raw_upper = 1000, 0
 
-        # Linear mapping: zero_offset → 0 rad, 0 → upper_limit
-        return ((zero_offset - angle_actual) / zero_offset) * upper_limit
+        # Linear two-point mapping: raw_zero → 0 rad, raw_upper → upper_limit
+        raw_range = raw_upper - raw_zero
+        if raw_range == 0:
+            return 0.0
+        return np.clip((angle_actual - raw_zero) / raw_range * upper_limit,
+                       0.0, upper_limit)
 
     def compute_all_transforms(self,
                                joint_positions: Optional[Dict[str, float]] = None,
