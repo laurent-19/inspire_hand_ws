@@ -37,3 +37,6 @@ __pycache__
 # JetBrains IDE
 .idea/
 
+# Training data (only sample demos are tracked)
+training_data/
+
