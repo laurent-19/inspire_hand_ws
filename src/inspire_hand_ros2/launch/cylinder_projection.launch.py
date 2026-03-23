@@ -69,6 +69,12 @@ def generate_launch_description():
         description='Cylinder height in meters'
     )
 
+    cylinder_offset_y_arg = DeclareLaunchArgument(
+        'cylinder_offset_y',
+        default_value='0.0',
+        description='Y-axis offset for cylinder center in meters (left-right direction)'
+    )
+
     # Configuration file paths
     tactile_config_file = PathJoinSubstitution([
         FindPackageShare('inspire_hand_ros2'),
@@ -124,6 +130,7 @@ def generate_launch_description():
             {
                 'cylinder_radius': LaunchConfiguration('cylinder_radius'),
                 'cylinder_height': LaunchConfiguration('cylinder_height'),
+                'cylinder_offset_y': LaunchConfiguration('cylinder_offset_y'),
                 'publish_rate': LaunchConfiguration('publish_rate'),
             }
         ],
@@ -152,6 +159,7 @@ def generate_launch_description():
         points_per_taxel_arg,
         cylinder_radius_arg,
         cylinder_height_arg,
+        cylinder_offset_y_arg,
         robot_state_publisher,
         tactile_pointcloud_node,
         cylinder_projection_node,

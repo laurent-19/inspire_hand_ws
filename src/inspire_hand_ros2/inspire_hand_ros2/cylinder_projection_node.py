@@ -2,10 +2,12 @@
 """
 Cylinder Projection Node for Inspire Hand Tactile Visualization.
 
-Projects tactile point cloud onto a virtual cylinder surface. The cylinder center is
-offset by one radius from the palm force sensor origin, so the cylinder edge touches
-the palm sensor. The cylinder axis aligns with the palm's X-axis (finger direction),
-and points are projected radially in the YZ plane.
+Projects tactile point cloud onto a virtual cylinder surface. The cylinder axis aligns
+with the palm's X-axis (finger direction), and points are projected radially in the YZ plane.
+
+Cylinder positioning:
+- Z-axis offset: Default one radius from palm sensor origin (edge touches sensor)
+- Y-axis offset: Configurable left-right shift of cylinder center
 
 This enables grasp pattern visualization for cylindrical objects.
 """
@@ -31,7 +33,8 @@ class CylinderProjectionNode(Node):
         self.declare_parameter('cylinder_frame', 'right_palm_force_sensor')
         self.declare_parameter('cylinder_radius', 0.02)  # meters
         self.declare_parameter('cylinder_height', 0.15)  # meters
-        self.declare_parameter('cylinder_offset', 0.0)  # meters (additional offset beyond radius)
+        self.declare_parameter('cylinder_offset', 0.0)  # meters (additional Z offset beyond radius)
+        self.declare_parameter('cylinder_offset_y', 0.0)  # meters (Y-axis offset, left-right)
         self.declare_parameter('max_distance', 0.10)  # filter distant points
         self.declare_parameter('publish_rate', 50.0)  # Hz
         self.declare_parameter('publish_reference', True)
@@ -46,6 +49,7 @@ class CylinderProjectionNode(Node):
         self.cylinder_radius = self.get_parameter('cylinder_radius').value
         self.cylinder_height = self.get_parameter('cylinder_height').value
         self.cylinder_offset = self.get_parameter('cylinder_offset').value
+        self.cylinder_offset_y = self.get_parameter('cylinder_offset_y').value
         self.max_distance = self.get_parameter('max_distance').value
         self.publish_rate_value = self.get_parameter('publish_rate').value
         self.publish_reference_flag = self.get_parameter('publish_reference').value
@@ -89,7 +93,8 @@ class CylinderProjectionNode(Node):
         self.get_logger().info(
             f"Cylinder projection node initialized:\n"
             f"  Cylinder: radius={self.cylinder_radius}m, height={self.cylinder_height}m\n"
-            f"  Offset: {self.cylinder_offset}m (edge at palm sensor when offset=0)\n"
+            f"  Offset Z: {self.cylinder_offset}m (edge at palm sensor when offset=0)\n"
+            f"  Offset Y: {self.cylinder_offset_y}m (left-right shift)\n"
             f"  Frame: {self.cylinder_frame} (axis along X, positioned in +Z)\n"
             f"  Input: {self.input_topic}\n"
             f"  Output: {self.output_topic}"
@@ -120,9 +125,10 @@ class CylinderProjectionNode(Node):
 
         # Cylinder surface (axis along X)
         # In palm_force_sensor frame: X = along fingers, Y = left-right, Z = up-down
-        # Position cylinder so edge is at origin when offset=0
-        # Total offset = radius + additional offset
-        y = self.cylinder_radius * np.cos(theta_flat)
+        # Position cylinder so edge is at origin when offsets=0
+        # Total Z offset = radius + additional offset
+        # Y offset shifts cylinder left-right
+        y = self.cylinder_radius * np.cos(theta_flat) + self.cylinder_offset_y
         z = self.cylinder_radius * np.sin(theta_flat) + self.cylinder_radius + self.cylinder_offset
 
         points = np.column_stack([x_flat, y, z]).astype(np.float32)
@@ -288,15 +294,17 @@ class CylinderProjectionNode(Node):
         y = points_palm[:, 1]  # Radial component
         z = points_palm[:, 2]  # Radial component
 
-        # Adjust z coordinate for cylinder offset
-        # Cylinder center is at z = radius + offset (so edge is at origin when offset=0)
+        # Adjust coordinates for cylinder offsets
+        # Cylinder center Y position: offset_y
+        # Cylinder center Z position: radius + offset (so edge is at origin when offset=0)
+        y_centered = y - self.cylinder_offset_y
         z_centered = z - (self.cylinder_radius + self.cylinder_offset)
 
         # Cylindrical coordinates in YZ plane (relative to cylinder center)
-        r = np.sqrt(y**2 + z_centered**2)
+        r = np.sqrt(y_centered**2 + z_centered**2)
 
         # Handle points on axis (r ≈ 0)
-        theta = np.arctan2(z_centered, y)
+        theta = np.arctan2(z_centered, y_centered)
         # For points very close to axis, theta is undefined but we'll use default
         # The projection will map them to arbitrary point on cylinder
 
@@ -317,7 +325,7 @@ class CylinderProjectionNode(Node):
 
         # Project to cylinder surface (radial projection in YZ plane)
         x_proj = x[valid_mask]
-        y_proj = self.cylinder_radius * np.cos(theta[valid_mask])
+        y_proj = self.cylinder_radius * np.cos(theta[valid_mask]) + self.cylinder_offset_y
         z_proj = self.cylinder_radius * np.sin(theta[valid_mask]) + self.cylinder_radius + self.cylinder_offset
 
         # Build projected points in cylinder frame

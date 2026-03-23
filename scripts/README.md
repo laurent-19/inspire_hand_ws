@@ -123,11 +123,37 @@ Binary PCD v0.7 format with fields:
 | `/joint_states` | JointState | ~10 Hz | joint_state.json |
 | `/inspire_hand/tactile_pointcloud` | PointCloud2 | ~10 Hz | tactile_pointcloud.pcd |
 
+## Sample Data
+
+### Deformable (Empty/Soft Objects)
+**Example: `record_250_empty_10/sample_0005`**
+
+| Camera RGB | Tactile Colormap |
+|-----------|------------------|
+| ![Camera](../training_data/deformable/record_250_empty_10/sample_0005/camera_rgb.png) | ![Tactile](../training_data/deformable/record_250_empty_10/sample_0005/tactile_colormap.png) |
+
+### Non-Deformable (Rigid/Filled Objects)
+**Example: `record_250_12/sample_0000`**
+
+| Camera RGB | Tactile Colormap |
+|-----------|------------------|
+| ![Camera](../training_data/non_deformable/record_250_12/sample_0000/camera_rgb.png) | ![Tactile](../training_data/non_deformable/record_250_12/sample_0000/tactile_colormap.png) |
+
+**View more samples:**
+```bash
+./scripts/visualize_sample.py training_data/deformable/record_250_empty_10/sample_0000
+./scripts/visualize_sample.py training_data/deformable/record_250_empty_10/sample_0005
+./scripts/visualize_sample.py training_data/deformable/record_250_empty_10/sample_0010
+./scripts/visualize_sample.py training_data/non_deformable/record_250_12/sample_0000
+./scripts/visualize_sample.py training_data/non_deformable/record_250_12/sample_0002
+```
+
 ## Requirements
 
 - ROS2 Humble
 - Python packages: `opencv-python`, `numpy`, `open3d`
 - Built workspace: `colcon build`
+- Install dependencies: `pip install -r scripts/requirements.txt`
 
 ## Collected Dataset Statistics
 
