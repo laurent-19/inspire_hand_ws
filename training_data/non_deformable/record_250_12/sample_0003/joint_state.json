@@ -1,0 +1,36 @@
+{
+  "timestamp": {
+    "sec": 1774010394,
+    "nanosec": 92150900
+  },
+  "name": [
+    "right_little_1_joint",
+    "right_ring_1_joint",
+    "right_middle_1_joint",
+    "right_index_1_joint",
+    "right_thumb_2_joint",
+    "right_thumb_1_joint",
+    "right_index_2_joint",
+    "right_middle_2_joint",
+    "right_ring_2_joint",
+    "right_little_2_joint",
+    "right_thumb_3_joint",
+    "right_thumb_4_joint"
+  ],
+  "position": [
+    1.438099980354309,
+    1.0865004062652588,
+    1.0937052965164185,
+    1.0403889417648315,
+    0.619379997253418,
+    1.309000015258789,
+    1.1280937194824219,
+    1.1859047412872314,
+    1.1780924797058105,
+    1.5593318939208984,
+    0.0,
+    0.0
+  ],
+  "velocity": [],
+  "effort": []
+}
