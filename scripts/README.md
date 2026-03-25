@@ -56,81 +56,6 @@ Interactive visualizer for inspecting extracted samples.
 4. Camera point cloud viewer (if available):
    - **Q** - Quit
 
-### `generate_trajectory_yaml.py`
-
-Converts a bag sequence (samples) into a trajectory YAML file for simulation playback.
-
-**Usage:**
-```bash
-# Generate trajectory from a single bag sequence
-./scripts/generate_trajectory_yaml.py training_data/deformable/record_250_empty_10 output.yaml
-./scripts/generate_trajectory_yaml.py training_data/non_deformable/record_250_12 output.yaml
-```
-
-**Output:** YAML file with:
-- Joint names list
-- Per-frame: frame number, image path, joint positions (radians)
-
-### `generate_all_trajectories.sh`
-
-Batch processes all bags in `training_data/` to generate trajectory YAMLs.
-
-**Usage:**
-```bash
-# Generate YAMLs for all 198 bags + combined datasets by category
-./scripts/generate_all_trajectories.sh
-```
-
-**Output:**
-- `training_data/trajectories/deformable/*.yaml` (83 individual files)
-- `training_data/trajectories/non_deformable/*.yaml` (115 individual files)
-- `training_data/deformable_trajectories.yaml` (all deformable frames combined)
-- `training_data/non_deformable_trajectories.yaml` (all non-deformable frames combined)
-
-### `combine_trajectories.py`
-
-Combines individual trajectory YAMLs from a directory into a single flat dataset file.
-Stacks all frames from all trajectories sequentially.
-
-**Usage:**
-```bash
-# Combine deformable trajectories
-./scripts/combine_trajectories.py training_data/trajectories/deformable deformable_combined.yaml
-
-# Combine non-deformable trajectories
-./scripts/combine_trajectories.py training_data/trajectories/non_deformable non_deformable_combined.yaml
-```
-
-**Output:** Single YAML with all frames stacked together:
-```yaml
-joints: [right_little_1_joint, right_ring_1_joint, ...]
-frames:
-- frame: 0
-  image: training_data/deformable/record_250_empty_1/sample_0000/camera_rgb.png
-  joint_positions_rad: {...}
-- frame: 1
-  image: training_data/deformable/record_250_empty_1/sample_0001/camera_rgb.png
-  joint_positions_rad: {...}
-...
-```
-
-### `fix_yaml_paths.sh`
-
-Fixes absolute paths in YAML files to relative paths.
-
-**Usage:**
-```bash
-# Fix all YAMLs in a directory
-./scripts/fix_yaml_paths.sh yamls/
-
-# Fix a single YAML file
-./scripts/fix_yaml_paths.sh yamls/deformable.yaml
-
-# Custom path replacement
-./scripts/fix_yaml_paths.sh yamls/ '/old/path/' 'new/path/'
-```
-
-**Default:** Replaces `/home/analog/develop/inspire_hand_ws/scripts/../training_data/` with `training_data/`
 
 ## Output Structure
 
@@ -240,15 +165,9 @@ Binary PCD v0.7 format with fields:
 
 | Metric | Value |
 |--------|-------|
-| Total Samples | 6,137 |
-| Deformable Samples | 2,281 |
-| Non-deformable Samples | 3,856 |
+| Total Samples | 6,087 |
 | Total Bags | 198 |
-| Deformable Bags | 83 |
-| Non-deformable Bags | 115 |
-| Dataset Size | 8.9 GB |
-| Sample Interval | 0.081s |
-| Samples per Bag | ~30 |
-| Bag Duration | ~5 seconds |
+| Dataset Size | 11.08 GB |
+| Sample Interval | 0.081s (~30 samples per bag) |
 
-See `training_data/README.md` for full dataset documentation including data ranges and hardware specs.
+**Note:** All modalities are complete except `camera_pointcloud.pcd`, which is missing from 306 samples (5.0%) due to sparse depth camera recording in source bags. See `training_data/README.md` for affected bags.

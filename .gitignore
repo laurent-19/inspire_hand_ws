@@ -37,6 +37,8 @@ __pycache__
 # JetBrains IDE
 .idea/
 
-# Training data (only sample demos are tracked)
-training_data/
+# Training data (only README is tracked)
+training_data/*
+!training_data/README.md
 
+missing_*.txt

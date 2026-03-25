@@ -67,6 +67,13 @@ class BagDataSampler(Node):
             depth=10
         )
 
+        # More permissive QoS for depth (may have different publisher settings)
+        qos_depth = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_ALL,
+            depth=100
+        )
+
         # Create independent subscribers
         self.create_subscription(
             Image, '/camera/camera/color/image_raw',
@@ -84,12 +91,13 @@ class BagDataSampler(Node):
             JointState, '/joint_states',
             self.joint_state_callback, qos_profile)
         # Use unaligned depth topics (aligned has only 0-2 messages in bags)
+        # With more permissive QoS to catch all depth messages
         self.create_subscription(
             Image, '/camera/camera/depth/image_rect_raw',
-            self.depth_callback, qos_profile)
+            self.depth_callback, qos_depth)
         self.create_subscription(
             CameraInfo, '/camera/camera/depth/camera_info',
-            self.camera_info_callback, qos_profile)
+            self.camera_info_callback, qos_depth)
 
         self.get_logger().info(
             f'BagDataSampler initialized: output={self.sample_dir}, interval={self.sample_interval}s')
@@ -107,7 +115,12 @@ class BagDataSampler(Node):
         self.cache['tactile_pcd'] = msg
 
     def depth_callback(self, msg):
+        """Cache depth image for point cloud generation."""
         self.cache['depth_image'] = msg
+        # Try to save a sample with the newly arrived depth image
+        # This ensures we capture samples with camera PCD when depth data arrives
+        if self.cache['joint_state'] is not None:
+            self.try_save_sample(self.cache['joint_state'].header.stamp, force=True)
 
     def camera_info_callback(self, msg):
         """Extract camera intrinsics from CameraInfo message."""
@@ -125,8 +138,13 @@ class BagDataSampler(Node):
         self.cache['joint_state'] = msg
         self.try_save_sample(msg.header.stamp)
 
-    def try_save_sample(self, stamp):
-        """Try to save a sample if all data is available and enough time has passed."""
+    def try_save_sample(self, stamp, force=False):
+        """Try to save a sample if all data is available and enough time has passed.
+
+        Args:
+            stamp: Timestamp for rate limiting
+            force: If True, bypass interval check (used when depth image arrives)
+        """
         # Check if required data is available (projected_pcd is optional)
         required = ['camera', 'tactile_colormap', 'hand_state', 'tactile_pcd', 'joint_state']
         if any(self.cache[k] is None for k in required):
@@ -134,7 +152,7 @@ class BagDataSampler(Node):
 
         # Rate limit using joint_state timestamps (consistent with other topics)
         current_stamp_sec = stamp.sec + stamp.nanosec / 1e9
-        if self.last_sample_stamp is not None:
+        if not force and self.last_sample_stamp is not None:
             elapsed = current_stamp_sec - self.last_sample_stamp
             if elapsed < self.sample_interval:
                 return

@@ -6,15 +6,17 @@ Multi-modal training dataset for AI-based grasp analysis, collected from the RH5
 
 | Metric | Value |
 |--------|-------|
-| Total Samples | 6,137 |
-| Deformable Samples | 2,281 |
-| Non-deformable Samples | 3,856 |
-| Total Bags Processed | 198 |
+| Total Samples | 6,087 |
+| Deformable Samples | 2,229 |
+| Non-deformable Samples | 3,858 |
+| Total Bags | 198 |
 | Deformable Bags | 83 |
 | Non-deformable Bags | 115 |
-| Dataset Size | ~12 GB |
+| Dataset Size | 11.08 GB |
+| Total Files | 42,303 |
 | Sample Rate | 0.081s interval (~30 samples/bag) |
 | Bag Duration | ~5 seconds each |
+| Avg Sample Size | 1.86 MB |
 
 ## Classification
 
@@ -155,6 +157,20 @@ training_data/
     ├── record_250_1/
     └── ...
 ```
+
+## Modality Completeness
+
+**Camera Point Cloud Gap:** 306 samples (5.0%) missing `camera_pointcloud.pcd` due to sparse depth camera recording in source ROS2 bags. These 8 bags had no depth data published during collection:
+- non_deformable/record_mid_bottle_8: 41 missing
+- non_deformable/record_330_fat_12: 39 missing
+- non_deformable/record_250_1: 30 missing
+- deformable/record_mid_bottle_empty_11: 30 missing
+- non_deformable/record_mid_bottle_10: 29 missing
+- deformable/record_big_bottle_empty_15: 29 missing
+- non_deformable/record_big_bottle_16: 27 missing
+- non_deformable/record_small_bottle_12: 22 missing
+
+**Why unfixable:** Source depth data doesn't exist in bags (despite metadata claims). Re-processing cannot recover missing source data.
 
 ## ROS2 Topics Recorded
 
