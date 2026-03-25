@@ -49,9 +49,88 @@ Interactive visualizer for inspecting extracted samples.
 **Controls:**
 1. Camera RGB image → press any key to continue
 2. Tactile colormap → press any key to continue
-3. 3D point cloud viewer:
+3. Tactile point cloud viewer:
    - **A** - Toggle between RGB and Intensity coloring
+   - **R** - Toggle between Filtered and Raw point cloud
    - **Q** - Quit
+4. Camera point cloud viewer (if available):
+   - **Q** - Quit
+
+### `generate_trajectory_yaml.py`
+
+Converts a bag sequence (samples) into a trajectory YAML file for simulation playback.
+
+**Usage:**
+```bash
+# Generate trajectory from a single bag sequence
+./scripts/generate_trajectory_yaml.py training_data/deformable/record_250_empty_10 output.yaml
+./scripts/generate_trajectory_yaml.py training_data/non_deformable/record_250_12 output.yaml
+```
+
+**Output:** YAML file with:
+- Joint names list
+- Per-frame: frame number, image path, joint positions (radians)
+
+### `generate_all_trajectories.sh`
+
+Batch processes all bags in `training_data/` to generate trajectory YAMLs.
+
+**Usage:**
+```bash
+# Generate YAMLs for all 198 bags + combined datasets by category
+./scripts/generate_all_trajectories.sh
+```
+
+**Output:**
+- `training_data/trajectories/deformable/*.yaml` (83 individual files)
+- `training_data/trajectories/non_deformable/*.yaml` (115 individual files)
+- `training_data/deformable_trajectories.yaml` (all deformable frames combined)
+- `training_data/non_deformable_trajectories.yaml` (all non-deformable frames combined)
+
+### `combine_trajectories.py`
+
+Combines individual trajectory YAMLs from a directory into a single flat dataset file.
+Stacks all frames from all trajectories sequentially.
+
+**Usage:**
+```bash
+# Combine deformable trajectories
+./scripts/combine_trajectories.py training_data/trajectories/deformable deformable_combined.yaml
+
+# Combine non-deformable trajectories
+./scripts/combine_trajectories.py training_data/trajectories/non_deformable non_deformable_combined.yaml
+```
+
+**Output:** Single YAML with all frames stacked together:
+```yaml
+joints: [right_little_1_joint, right_ring_1_joint, ...]
+frames:
+- frame: 0
+  image: training_data/deformable/record_250_empty_1/sample_0000/camera_rgb.png
+  joint_positions_rad: {...}
+- frame: 1
+  image: training_data/deformable/record_250_empty_1/sample_0001/camera_rgb.png
+  joint_positions_rad: {...}
+...
+```
+
+### `fix_yaml_paths.sh`
+
+Fixes absolute paths in YAML files to relative paths.
+
+**Usage:**
+```bash
+# Fix all YAMLs in a directory
+./scripts/fix_yaml_paths.sh yamls/
+
+# Fix a single YAML file
+./scripts/fix_yaml_paths.sh yamls/deformable.yaml
+
+# Custom path replacement
+./scripts/fix_yaml_paths.sh yamls/ '/old/path/' 'new/path/'
+```
+
+**Default:** Replaces `/home/analog/develop/inspire_hand_ws/scripts/../training_data/` with `training_data/`
 
 ## Output Structure
 
@@ -61,11 +140,13 @@ training_data/
 ├── deformable/                    # Bags with "_empty" in name
 │   └── record_250_empty_1/
 │       ├── sample_0000/
-│       │   ├── camera_rgb.png         # 1280x720 RGB camera image
-│       │   ├── tactile_colormap.png   # 360x200 tactile heatmap
-│       │   ├── hand_state.json        # Actuator positions, forces, etc.
-│       │   ├── joint_state.json       # Joint angles
-│       │   └── tactile_pointcloud.pcd # 3D point cloud with intensity
+│       │   ├── camera_rgb.png            # 1280x720 RGB camera image
+│       │   ├── camera_pointcloud.pcd     # Depth camera point cloud (CUDA processed)
+│       │   ├── tactile_colormap.png      # 360x200 tactile heatmap
+│       │   ├── hand_state.json           # Actuator positions, forces, etc.
+│       │   ├── joint_state.json          # Joint angles
+│       │   ├── tactile_pointcloud.pcd    # 3D point cloud (grey filtered)
+│       │   └── tactile_pointcloud_raw.pcd # 3D point cloud (unfiltered)
 │       ├── sample_0001/
 │       └── ...
 └── non_deformable/                # All other bags
@@ -151,7 +232,7 @@ Binary PCD v0.7 format with fields:
 ## Requirements
 
 - ROS2 Humble
-- Python packages: `opencv-python`, `numpy`, `open3d`
+- Python packages: `opencv-python`, `numpy`, `open3d`, `pyyaml`
 - Built workspace: `colcon build`
 - Install dependencies: `pip install -r scripts/requirements.txt`
 

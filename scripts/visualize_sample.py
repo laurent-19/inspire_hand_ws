@@ -2,6 +2,12 @@
 """
 Visualize a training sample: PNG images and PCD point clouds.
 
+Displays:
+1. Camera RGB image
+2. Tactile colormap
+3. Tactile point cloud (with RGB/Intensity toggle)
+4. Camera point cloud (if available)
+
 Usage:
     ./visualize_sample.py training_data/non_deformable/record_250_1/sample_0000
     ./visualize_sample.py training_data/deformable/record_250_empty_1/sample_0005
@@ -131,56 +137,136 @@ def visualize_sample(sample_dir):
         for name, pos in zip(joint_state['name'], joint_state['position']):
             print(f"  {name}: {pos:.4f}")
 
-    # Load point cloud with both color modes
+    # Load tactile point cloud with both color modes (filtered)
     pcd_path = os.path.join(sample_dir, 'tactile_pointcloud.pcd')
     pcd, rgb_colors, intensity_colors = load_pcd_with_data(pcd_path)
     if pcd:
-        print(f"\n=== Point Cloud ===")
+        print(f"\n=== Tactile Point Cloud (filtered) ===")
         print(f"  Points: {len(pcd.points)}")
+
+    # Load raw tactile point cloud (unfiltered)
+    pcd_raw_path = os.path.join(sample_dir, 'tactile_pointcloud_raw.pcd')
+    pcd_raw, rgb_colors_raw, intensity_colors_raw = load_pcd_with_data(pcd_raw_path)
+    if pcd_raw:
+        print(f"\n=== Tactile Point Cloud (raw) ===")
+        print(f"  Points: {len(pcd_raw.points)}")
+
+    # Load camera point cloud (optional)
+    camera_pcd_path = os.path.join(sample_dir, 'camera_pointcloud.pcd')
+    camera_pcd = None
+    if os.path.exists(camera_pcd_path):
+        camera_pcd = o3d.io.read_point_cloud(camera_pcd_path)
+        if camera_pcd and len(camera_pcd.points) > 0:
+            # Color camera points grey for distinction
+            camera_pcd.paint_uniform_color([0.5, 0.5, 0.5])
+            print(f"\n=== Camera Point Cloud ===")
+            print(f"  Points: {len(camera_pcd.points)}")
+
+    # Count total steps
+    total_steps = sum([
+        camera_img is not None,
+        tactile_img is not None,
+        pcd is not None and len(pcd.points) > 0,
+        camera_pcd is not None and len(camera_pcd.points) > 0
+    ])
+    step = 0
 
     # Display images one at a time
     if camera_img is not None:
-        print("\n[1/3] Camera RGB - press any key to continue")
+        step += 1
+        print(f"\n[{step}/{total_steps}] Camera RGB - press any key to continue")
         with suppress_qt_warnings():
             cv2.imshow('Camera RGB', camera_img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
     if tactile_img is not None:
-        print("[2/3] Tactile Colormap - press any key to continue")
+        step += 1
+        print(f"[{step}/{total_steps}] Tactile Colormap - press any key to continue")
         with suppress_qt_warnings():
             cv2.imshow('Tactile Colormap', tactile_img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
-    # Display point cloud with toggle
+    # Display tactile point cloud with toggle
     if pcd and len(pcd.points) > 0:
-        print("[3/3] Point Cloud - press A to toggle RGB/Intensity, Q to quit")
+        step += 1
+        has_raw = pcd_raw is not None and len(pcd_raw.points) > 0
+        controls = "A=RGB/Intensity"
+        if has_raw:
+            controls += ", R=Filtered/Raw"
+        print(f"[{step}/{total_steps}] Tactile Point Cloud - {controls}, Q to quit")
 
         # Add coordinate frame for reference
         coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.05)
 
         # State for toggling
-        state = {'use_intensity': False}
+        state = {
+            'use_intensity': False,
+            'use_raw': False,
+            'current_pcd': pcd,
+            'current_rgb': rgb_colors,
+            'current_intensity': intensity_colors
+        }
 
         def toggle_color(vis):
             state['use_intensity'] = not state['use_intensity']
-            if state['use_intensity'] and intensity_colors is not None:
-                pcd.colors = o3d.utility.Vector3dVector(intensity_colors)
+            cur_pcd = state['current_pcd']
+            cur_intensity = state['current_intensity']
+            cur_rgb = state['current_rgb']
+            if state['use_intensity'] and cur_intensity is not None:
+                cur_pcd.colors = o3d.utility.Vector3dVector(cur_intensity)
                 print("  -> Intensity mode")
-            elif rgb_colors is not None:
-                pcd.colors = o3d.utility.Vector3dVector(rgb_colors)
+            elif cur_rgb is not None:
+                cur_pcd.colors = o3d.utility.Vector3dVector(cur_rgb)
                 print("  -> RGB mode")
-            vis.update_geometry(pcd)
+            vis.update_geometry(cur_pcd)
             return False
 
-        # Key callback: A (ord 65) to toggle
-        key_callbacks = {ord('A'): toggle_color}
+        def toggle_raw(vis):
+            if not has_raw:
+                return False
+            state['use_raw'] = not state['use_raw']
+            vis.remove_geometry(state['current_pcd'], reset_bounding_box=False)
+            if state['use_raw']:
+                state['current_pcd'] = pcd_raw
+                state['current_rgb'] = rgb_colors_raw
+                state['current_intensity'] = intensity_colors_raw
+                print("  -> Raw (unfiltered)")
+            else:
+                state['current_pcd'] = pcd
+                state['current_rgb'] = rgb_colors
+                state['current_intensity'] = intensity_colors
+                print("  -> Filtered")
+            # Apply current color mode
+            if state['use_intensity'] and state['current_intensity'] is not None:
+                state['current_pcd'].colors = o3d.utility.Vector3dVector(state['current_intensity'])
+            elif state['current_rgb'] is not None:
+                state['current_pcd'].colors = o3d.utility.Vector3dVector(state['current_rgb'])
+            vis.add_geometry(state['current_pcd'], reset_bounding_box=False)
+            return False
+
+        # Key callbacks: A to toggle color, R to toggle raw
+        key_callbacks = {ord('A'): toggle_color, ord('R'): toggle_raw}
 
         o3d.visualization.draw_geometries_with_key_callbacks(
             [pcd, coord_frame],
             key_callbacks,
             window_name=f'Tactile Point Cloud - {os.path.basename(sample_dir)}',
+            width=1024,
+            height=768
+        )
+
+    # Display camera point cloud
+    if camera_pcd and len(camera_pcd.points) > 0:
+        step += 1
+        print(f"[{step}/{total_steps}] Camera Point Cloud - press Q to quit")
+
+        coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.05)
+
+        o3d.visualization.draw_geometries(
+            [camera_pcd, coord_frame],
+            window_name=f'Camera Point Cloud - {os.path.basename(sample_dir)}',
             width=1024,
             height=768
         )

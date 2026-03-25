@@ -9,13 +9,15 @@ Uses a caching strategy to handle topics with misaligned timestamps.
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
-from sensor_msgs.msg import Image, PointCloud2, JointState
+from sensor_msgs.msg import Image, PointCloud2, JointState, CameraInfo
 from sensor_msgs_py import point_cloud2
 from inspire_hand_ros2.msg import InspireHandState
 import numpy as np
 import cv2
 import json
 import os
+import open3d as o3d
+from cv_bridge import CvBridge
 
 
 class BagDataSampler(Node):
@@ -47,7 +49,16 @@ class BagDataSampler(Node):
             'hand_state': None,
             'tactile_pcd': None,
             'joint_state': None,
+            'depth_image': None,
         }
+
+        # Camera intrinsics (will be set from CameraInfo topic)
+        self.camera_intrinsic = None
+
+        # GPU device for CUDA-accelerated point cloud processing (same as bag_to_pcd.py)
+        self.bridge = CvBridge()
+        self.device = o3d.core.Device("CUDA:0")
+        self.voxel_size = 0.01  # 1cm voxels for GPU reduction
 
         # QoS for bag playback compatibility
         qos_profile = QoSProfile(
@@ -72,6 +83,13 @@ class BagDataSampler(Node):
         self.create_subscription(
             JointState, '/joint_states',
             self.joint_state_callback, qos_profile)
+        # Use unaligned depth topics (aligned has only 0-2 messages in bags)
+        self.create_subscription(
+            Image, '/camera/camera/depth/image_rect_raw',
+            self.depth_callback, qos_profile)
+        self.create_subscription(
+            CameraInfo, '/camera/camera/depth/camera_info',
+            self.camera_info_callback, qos_profile)
 
         self.get_logger().info(
             f'BagDataSampler initialized: output={self.sample_dir}, interval={self.sample_interval}s')
@@ -88,6 +106,20 @@ class BagDataSampler(Node):
     def tactile_pcd_callback(self, msg):
         self.cache['tactile_pcd'] = msg
 
+    def depth_callback(self, msg):
+        self.cache['depth_image'] = msg
+
+    def camera_info_callback(self, msg):
+        """Extract camera intrinsics from CameraInfo message."""
+        if self.camera_intrinsic is None:
+            # K matrix as 3x3 Tensor on GPU: [[fx, 0, cx], [0, fy, cy], [0, 0, 1]]
+            self.camera_intrinsic = o3d.core.Tensor(
+                [[msg.k[0], 0, msg.k[2]], [0, msg.k[4], msg.k[5]], [0, 0, 1]],
+                dtype=o3d.core.Dtype.Float32, device=self.device
+            )
+            self.depth_image_size = (msg.width, msg.height)
+            self.get_logger().info(f'Camera intrinsics loaded: {msg.width}x{msg.height}')
+
     def joint_state_callback(self, msg):
         """Use joint_state as trigger - save sample when all data is available."""
         self.cache['joint_state'] = msg
@@ -95,8 +127,9 @@ class BagDataSampler(Node):
 
     def try_save_sample(self, stamp):
         """Try to save a sample if all data is available and enough time has passed."""
-        # Check if all data is available
-        if any(v is None for v in self.cache.values()):
+        # Check if required data is available (projected_pcd is optional)
+        required = ['camera', 'tactile_colormap', 'hand_state', 'tactile_pcd', 'joint_state']
+        if any(self.cache[k] is None for k in required):
             return
 
         # Rate limit using joint_state timestamps (consistent with other topics)
@@ -117,7 +150,10 @@ class BagDataSampler(Node):
         self.save_image(self.cache['tactile_colormap'], os.path.join(sample_subdir, 'tactile_colormap.png'))
         self.save_hand_state(self.cache['hand_state'], os.path.join(sample_subdir, 'hand_state.json'))
         self.save_joint_state(self.cache['joint_state'], os.path.join(sample_subdir, 'joint_state.json'))
-        self.save_pointcloud(self.cache['tactile_pcd'], os.path.join(sample_subdir, 'tactile_pointcloud.pcd'))
+        self.save_pointcloud(self.cache['tactile_pcd'], os.path.join(sample_subdir, 'tactile_pointcloud.pcd'), filter_grey=True)
+        self.save_pointcloud(self.cache['tactile_pcd'], os.path.join(sample_subdir, 'tactile_pointcloud_raw.pcd'), filter_grey=False)
+        if self.cache['depth_image'] is not None:
+            self.save_depth_pointcloud(self.cache['depth_image'], os.path.join(sample_subdir, 'camera_pointcloud.pcd'))
 
         self.get_logger().info(f'Saved sample {self.sample_count}')
         self.sample_count += 1
@@ -213,8 +249,14 @@ class BagDataSampler(Node):
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=2)
 
-    def save_pointcloud(self, msg: PointCloud2, filepath: str):
-        """Save PointCloud2 message to PCD file with x,y,z,rgb,intensity."""
+    def save_pointcloud(self, msg: PointCloud2, filepath: str, filter_grey: bool = False):
+        """Save PointCloud2 message to PCD file with x,y,z,rgb,intensity.
+
+        Args:
+            msg: PointCloud2 message
+            filepath: Output file path
+            filter_grey: If True, filter out grey points (where R≈G≈B)
+        """
         field_names = [f.name for f in msg.fields]
         want = [f for f in ['x', 'y', 'z', 'rgb', 'intensity'] if f in field_names]
 
@@ -225,23 +267,44 @@ class BagDataSampler(Node):
             self.get_logger().warn(f'Empty cloud for {filepath}')
             return
 
-        n = len(cloud)
         xyz = np.column_stack([cloud['x'], cloud['y'], cloud['z']]).astype(np.float32)
 
         # RGB
         colors = None
+        r_vals = g_vals = b_vals = None
         if 'rgb' in want:
             packed = cloud['rgb'].view(np.uint32)
-            r = ((packed >> 16) & 0xFF).astype(np.float64) / 255.0
-            g = ((packed >> 8) & 0xFF).astype(np.float64) / 255.0
-            b = (packed & 0xFF).astype(np.float64) / 255.0
-            colors = np.column_stack([r, g, b])
+            r_vals = ((packed >> 16) & 0xFF).astype(np.float64)
+            g_vals = ((packed >> 8) & 0xFF).astype(np.float64)
+            b_vals = (packed & 0xFF).astype(np.float64)
+            colors = np.column_stack([r_vals / 255.0, g_vals / 255.0, b_vals / 255.0])
 
         # Intensity
         intensity = None
         if 'intensity' in want:
             intensity = cloud['intensity'].astype(np.float32)
             intensity = np.where(np.isfinite(intensity), intensity, -1.0)
+
+        # Filter grey points: where R, G, B are all similar (grey/background)
+        if filter_grey and r_vals is not None:
+            # Grey threshold: max difference between R,G,B channels < 30
+            # and all channels are in grey range (100-200 typically)
+            max_diff = np.maximum(np.maximum(np.abs(r_vals - g_vals), np.abs(g_vals - b_vals)), np.abs(r_vals - b_vals))
+            avg_val = (r_vals + g_vals + b_vals) / 3.0
+            # Keep points that are NOT grey (high color variance OR very dark/bright)
+            is_grey = (max_diff < 30) & (avg_val > 80) & (avg_val < 200)
+            keep_mask = ~is_grey
+
+            xyz = xyz[keep_mask]
+            colors = colors[keep_mask]
+            if intensity is not None:
+                intensity = intensity[keep_mask]
+
+            self.get_logger().debug(f'Filtered {np.sum(is_grey)} grey points, kept {np.sum(keep_mask)}')
+
+        if len(xyz) == 0:
+            self.get_logger().warn(f'All points filtered for {filepath}')
+            return
 
         self.write_pcd(filepath, xyz, colors, intensity)
 
@@ -312,6 +375,51 @@ class BagDataSampler(Node):
         with open(filename, 'wb') as f:
             f.write(header.encode('ascii'))
             f.write(buf.tobytes())
+
+    def save_depth_pointcloud(self, msg: Image, filepath: str):
+        """Convert depth image to point cloud and save as PCD.
+
+        Uses exact algorithm from bag_to_pcd.py with CUDA acceleration.
+        """
+        # Need camera intrinsics
+        if self.camera_intrinsic is None:
+            # Use default RealSense D435 intrinsics as Tensor on GPU
+            self.camera_intrinsic = o3d.core.Tensor(
+                [[615.0, 0, msg.width / 2.0], [0, 615.0, msg.height / 2.0], [0, 0, 1]],
+                dtype=o3d.core.Dtype.Float32, device=self.device
+            )
+            self.get_logger().info(f'Using default camera intrinsics ({msg.width}x{msg.height})')
+
+        # Convert ROS Image to Open3D Tensor Image on GPU (cv_bridge)
+        depth_data = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        depth_data_float = depth_data.astype(np.float32)
+        depth_tensor = o3d.core.Tensor(depth_data_float, device=self.device)
+
+        # Create identity 4x4 extrinsic matrix on GPU
+        extrinsic = o3d.core.Tensor(np.eye(4), dtype=o3d.core.Dtype.Float32, device=self.device)
+
+        # CUDA Accelerated Projection
+        pcd = o3d.t.geometry.PointCloud.create_from_depth_image(
+            o3d.t.geometry.Image(depth_tensor),
+            self.camera_intrinsic,
+            extrinsic,
+            depth_scale=1000.0,
+            depth_max=0.8
+        )
+
+        # Fast Voxel Downsampling on GPU
+        if self.voxel_size > 0:
+            pcd = pcd.voxel_down_sample(voxel_size=self.voxel_size)
+
+        # Convert back to CPU for saving
+        points = pcd.point.positions.to(o3d.core.Device("CPU:0")).numpy()
+
+        if len(points) == 0:
+            self.get_logger().warn(f'Empty depth pointcloud for {filepath}')
+            return
+
+        # Write PCD (xyz only, no color/intensity)
+        self.write_pcd(filepath, points.astype(np.float32), colors=None, intensity=None)
 
 
 def main(args=None):

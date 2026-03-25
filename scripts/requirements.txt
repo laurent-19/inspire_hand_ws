@@ -1,3 +1,5 @@
-numpy
-opencv-python
+numpy<2  # cv_bridge (ROS2 Humble) requires numpy 1.x
+opencv-python<4.10  # compatible with numpy 1.x
+opencv-contrib-python<4.10
 open3d
+pyyaml

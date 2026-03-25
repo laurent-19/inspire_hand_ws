@@ -12,7 +12,7 @@ Multi-modal training dataset for AI-based grasp analysis, collected from the RH5
 | Total Bags Processed | 198 |
 | Deformable Bags | 83 |
 | Non-deformable Bags | 115 |
-| Dataset Size | 8.9 GB |
+| Dataset Size | ~12 GB |
 | Sample Rate | 0.081s interval (~30 samples/bag) |
 | Bag Duration | ~5 seconds each |
 
@@ -28,12 +28,44 @@ Multi-modal training dataset for AI-based grasp analysis, collected from the RH5
 - Format: PNG (RGB)
 - Source: Intel RealSense color camera
 
-### 2. Tactile Heatmap (`tactile_colormap.png`)
+### 2. Camera Point Cloud (`camera_pointcloud.pcd`)
+- Format: Binary PCD v0.7
+- Source: Intel RealSense depth camera
+- Processing: CUDA-accelerated depth projection, 1cm voxel downsampling
+- Fields: `x, y, z` (float32) - 3D coordinates in meters
+- Typical size: ~90KB, ~7,500 points
+
+### 3. Tactile Heatmap (`tactile_colormap.png`)
 - Resolution: 360 x 200 pixels
 - Format: PNG (RGB colormap)
 - Visualization of tactile sensor pressure distribution
 
-### 3. Hand State (`hand_state.json`)
+### 4. Tactile Point Cloud - Filtered (`tactile_pointcloud.pcd`)
+- Format: Binary PCD v0.7
+- Grey background points filtered out
+- Typical size: ~330KB
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `x, y, z` | float32 | 3D coordinates (meters) |
+| `rgb` | packed float32 | Point color |
+| `intensity` | float32 | Tactile pressure (0-4095 raw) |
+
+### 5. Tactile Point Cloud - Raw (`tactile_pointcloud_raw.pcd`)
+- Format: Binary PCD v0.7
+- All points including grey background
+- Typical size: ~380KB
+- Same fields as filtered version
+
+**Tactile Sensor Specifications:**
+- Resolution: 0.1 N per sensor
+- Sensors per finger: tip (3x3), nail (12x8), pad (10x8)
+- Thumb additional: middle section (3x3)
+- Palm: 8x14 grid
+- Raw value range: 0-4095 (12-bit ADC)
+- Total taxels: ~1500 per hand
+
+### 6. Hand State (`hand_state.json`)
 
 Actuator feedback from the 6-DOF hand (100 Hz sampling rate).
 
@@ -82,7 +114,7 @@ Actuator feedback from the 6-DOF hand (100 Hz sampling rate).
 | 3 | Motor abnormal |
 | 4 | Communication error |
 
-### 4. Joint State (`joint_state.json`)
+### 7. Joint State (`joint_state.json`)
 
 Robot joint angles for kinematic model.
 
@@ -101,24 +133,6 @@ Robot joint angles for kinematic model.
 - `right_thumb_1_joint`, `right_thumb_2_joint`
 - `right_thumb_3_joint`, `right_thumb_4_joint`
 
-### 5. Tactile Point Cloud (`tactile_pointcloud.pcd`)
-
-3D point cloud with tactile intensity values.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `x, y, z` | float32 | 3D coordinates (meters) |
-| `rgb` | packed float32 | Point color |
-| `intensity` | float32 | Tactile pressure (0-4095 raw) |
-
-**Tactile Sensor Specifications:**
-- Resolution: 0.1 N per sensor
-- Sensors per finger: tip (3x3), nail (12x8), pad (10x8)
-- Thumb additional: middle section (3x3)
-- Palm: 8x14 grid
-- Raw value range: 0-4095 (12-bit ADC)
-- Total taxels: ~1500 per hand
-
 ## Directory Structure
 
 ```
@@ -128,10 +142,12 @@ training_data/
 │   ├── record_250_empty_1/
 │   │   ├── sample_0000/
 │   │   │   ├── camera_rgb.png
+│   │   │   ├── camera_pointcloud.pcd
 │   │   │   ├── tactile_colormap.png
+│   │   │   ├── tactile_pointcloud.pcd
+│   │   │   ├── tactile_pointcloud_raw.pcd
 │   │   │   ├── hand_state.json
-│   │   │   ├── joint_state.json
-│   │   │   └── tactile_pointcloud.pcd
+│   │   │   └── joint_state.json
 │   │   ├── sample_0001/
 │   │   └── ...
 │   └── ...
@@ -145,6 +161,8 @@ training_data/
 | Topic | Message Type | Rate |
 |-------|-------------|------|
 | `/camera/camera/color/image_raw` | sensor_msgs/Image | ~10 Hz |
+| `/camera/camera/depth/image_rect_raw` | sensor_msgs/Image | ~20 Hz |
+| `/camera/camera/depth/camera_info` | sensor_msgs/CameraInfo | ~20 Hz |
 | `/cylinder_projection/unwrapped_colormap` | sensor_msgs/Image | ~10 Hz |
 | `/inspire_hand/inspire_hand_node/state` | InspireHandState | ~30 Hz |
 | `/joint_states` | sensor_msgs/JointState | ~10 Hz |
@@ -157,7 +175,7 @@ training_data/
 - **Force Sensors**: 6 (one per DOF), 0.1 N resolution
 - **Tactile Sensors**: 5 fingers + palm, ~1500 total taxels
 - **Gripping Force**: Up to 30 N (five-finger)
-- **Camera**: Intel RealSense (RGB)
+- **Camera**: Intel RealSense D435 (RGB + Depth)
 
 ## Collection Parameters
 
@@ -167,6 +185,7 @@ training_data/
 | Samples per Bag | ~30 |
 | Bag Duration | ~5 seconds |
 | QoS Profile | BEST_EFFORT, KEEP_LAST, depth=10 |
+| Depth Voxel Size | 1cm (CUDA downsampling) |
 
 ## Usage
 
@@ -174,6 +193,11 @@ Visualize a sample:
 ```bash
 ./scripts/visualize_sample.py training_data/non_deformable/record_250_1/sample_0000
 ```
+
+**Visualizer Controls:**
+- **A** - Toggle RGB/Intensity coloring for point clouds
+- **R** - Toggle Filtered/Raw tactile point cloud
+- **Q** - Quit current view
 
 Load in Python:
 ```python
@@ -189,6 +213,7 @@ tactile = cv2.imread('sample_0000/tactile_colormap.png')
 with open('sample_0000/hand_state.json') as f:
     hand = json.load(f)
 
-# Load point cloud
-pcd = o3d.io.read_point_cloud('sample_0000/tactile_pointcloud.pcd')
+# Load point clouds
+tactile_pcd = o3d.io.read_point_cloud('sample_0000/tactile_pointcloud.pcd')
+camera_pcd = o3d.io.read_point_cloud('sample_0000/camera_pointcloud.pcd')
 ```
