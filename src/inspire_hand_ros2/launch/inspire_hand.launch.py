@@ -2,13 +2,16 @@
 Launch file for Inspire Hand ROS2 node.
 
 Usage:
+    # Right hand (default, IP: 192.168.123.211)
     ros2 launch inspire_hand_ros2 inspire_hand.launch.py
-    ros2 launch inspire_hand_ros2 inspire_hand.launch.py hand_ip:=192.168.11.211
+
+    # Left hand (IP: 192.168.123.210)
+    ros2 launch inspire_hand_ros2 inspire_hand.launch.py hand_side:=left namespace:=inspire_hand_left
 """
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -19,10 +22,10 @@ def generate_launch_description():
     pkg_share = get_package_share_directory('inspire_hand_ros2')
 
     # Declare launch arguments
-    hand_ip_arg = DeclareLaunchArgument(
-        'hand_ip',
-        default_value='192.168.123.211',
-        description='IP address of the Inspire Hand'
+    hand_side_arg = DeclareLaunchArgument(
+        'hand_side',
+        default_value='right',
+        description='Hand side: right (192.168.123.211) or left (192.168.123.210)'
     )
 
     hand_port_arg = DeclareLaunchArgument(
@@ -76,8 +79,15 @@ def generate_launch_description():
     namespace_arg = DeclareLaunchArgument(
         'namespace',
         default_value='inspire_hand',
-        description='Node namespace'
+        description='Node namespace (override hand_side if set)'
     )
+
+    # Compute hand_ip from hand_side
+    hand_ip_value = PythonExpression([
+        "'192.168.123.210' if '",
+        LaunchConfiguration('hand_side'),
+        "' == 'left' else '192.168.123.211'"
+    ])
 
     # Create node
     inspire_hand_node = Node(
@@ -86,7 +96,7 @@ def generate_launch_description():
         name='inspire_hand_node',
         namespace=LaunchConfiguration('namespace'),
         parameters=[{
-            'hand_ip': LaunchConfiguration('hand_ip'),
+            'hand_ip': hand_ip_value,
             'hand_port': LaunchConfiguration('hand_port'),
             'device_id': LaunchConfiguration('device_id'),
             'state_rate': LaunchConfiguration('state_rate'),
@@ -101,7 +111,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        hand_ip_arg,
+        hand_side_arg,
         hand_port_arg,
         device_id_arg,
         state_rate_arg,
