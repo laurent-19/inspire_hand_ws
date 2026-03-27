@@ -41,7 +41,8 @@ from inspire_hand_ros2.srv import (
     Grasp,
     Release,
     SetFingerPosition,
-    GetHandState
+    GetHandState,
+    Calibrate
 )
 from inspire_hand_ros2.action import GraspObject
 
@@ -68,9 +69,13 @@ class InspireHandNode(Node):
         ~/release: Release and open hand
         ~/set_finger_position: Direct finger control
         ~/get_state: Get current state
+        ~/calibrate: Calibrate force sensors (hand must be fully open)
 
     Actions:
         ~/grasp_object: Grasp with real-time feedback
+
+    Parameters:
+        auto_calibrate (bool): Run calibration on startup (default: false)
     """
 
     def __init__(self):
@@ -86,6 +91,7 @@ class InspireHandNode(Node):
         self.declare_parameter('default_force', 500)
         self.declare_parameter('default_speed', 500)
         self.declare_parameter('slip_compensation', True)
+        self.declare_parameter('auto_calibrate', False)
 
         # Get parameters
         hand_ip = self.get_parameter('hand_ip').value
@@ -97,6 +103,7 @@ class InspireHandNode(Node):
         default_force = self.get_parameter('default_force').value
         default_speed = self.get_parameter('default_speed').value
         slip_compensation = self.get_parameter('slip_compensation').value
+        auto_calibrate = self.get_parameter('auto_calibrate').value
 
         self.get_logger().info(f'Connecting to Inspire Hand at {hand_ip}:{hand_port}')
 
@@ -104,7 +111,8 @@ class InspireHandNode(Node):
         self.driver = InspireHandDriver(
             ip=hand_ip,
             port=hand_port,
-            device_id=device_id
+            device_id=device_id,
+            auto_calibrate=auto_calibrate
         )
 
         if not self.driver.is_connected():
@@ -159,6 +167,10 @@ class InspireHandNode(Node):
         )
         self.get_state_srv = self.create_service(
             GetHandState, '~/get_state', self.get_state_callback,
+            callback_group=self.cb_group
+        )
+        self.calibrate_srv = self.create_service(
+            Calibrate, '~/calibrate', self.calibrate_callback,
             callback_group=self.cb_group
         )
 
@@ -351,6 +363,32 @@ class InspireHandNode(Node):
 
         except Exception as e:
             self.get_logger().error(f'Error getting state: {e}')
+
+        return response
+
+    def calibrate_callback(self, request, response):
+        """Handle calibration service request."""
+        try:
+            self.get_logger().warn(
+                'Starting force sensor calibration. '
+                'Ensure hand is fully open with no object contact!'
+            )
+
+            # Run calibration
+            success = self.driver.calibrate(reset_to_factory=request.reset_to_factory_defaults)
+
+            response.success = success
+            if success:
+                response.message = 'Calibration completed successfully'
+                self.get_logger().info('Calibration successful')
+            else:
+                response.message = 'Calibration failed'
+                self.get_logger().error('Calibration failed')
+
+        except Exception as e:
+            response.success = False
+            response.message = f'Error: {e}'
+            self.get_logger().error(f'Calibration error: {e}')
 
         return response
 

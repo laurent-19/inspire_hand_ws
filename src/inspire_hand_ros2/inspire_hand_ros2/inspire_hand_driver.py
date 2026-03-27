@@ -67,7 +67,8 @@ class InspireHandDriver:
     def __init__(self, ip: str = '192.168.123.211', port: int = 6000,
                  device_id: int = 1, use_serial: bool = False,
                  serial_port: str = '/dev/ttyUSB0', baudrate: int = 115200,
-                 max_retries: int = 5, retry_delay: float = 2.0):
+                 max_retries: int = 5, retry_delay: float = 2.0,
+                 auto_calibrate: bool = False):
         """
         Initialize the Inspire Hand driver.
 
@@ -80,6 +81,7 @@ class InspireHandDriver:
             baudrate: Serial baud rate
             max_retries: Connection retry attempts
             retry_delay: Delay between retries in seconds
+            auto_calibrate: Run calibration on startup (default False)
         """
         self.device_id = device_id
         self.use_serial = use_serial
@@ -100,10 +102,14 @@ class InspireHandDriver:
         # Connect with retry
         self._connect(max_retries, retry_delay)
 
-        # Clear errors and calibrate on startup
+        # Clear errors on startup
         if self._connected:
             self.clear_errors()
-            self.calibrate()
+
+            # Only calibrate if explicitly requested
+            if auto_calibrate:
+                print("[InspireHandDriver] Auto-calibration enabled")
+                self.calibrate()
 
     def _connect(self, max_retries: int, retry_delay: float):
         """Connect to Modbus server with retry logic."""
@@ -335,24 +341,100 @@ class InspireHandDriver:
                 print(f"[InspireHandDriver] Clear errors failed: {e}")
                 return False
 
-    def calibrate(self) -> bool:
-        """Reset parameters and run force calibration."""
+    def calibrate(self, reset_to_factory: bool = False) -> bool:
+        """
+        Run force sensor calibration.
+
+        IMPORTANT: Hand must be fully open with no object contact before calling.
+
+        Args:
+            reset_to_factory: Reset all parameters to factory defaults before calibration
+
+        Returns:
+            True if calibration successful
+        """
         import time
-        with self._lock:
-            try:
-                print("[InspireHandDriver] Running calibration...")
-                # Reset parameters (register 1006)
-                self.client.write_register(1006, 1, device_id=self.device_id)
+        try:
+            print("[InspireHandDriver] Running force sensor calibration...")
+
+            # Optionally reset parameters (register 1006)
+            if reset_to_factory:
+                print("[InspireHandDriver] Resetting to factory defaults...")
+                with self._lock:
+                    self.client.write_register(1006, 1, device_id=self.device_id)
                 time.sleep(0.5)
-                # Force calibration: set angles to 1000, trigger calibration (register 1009)
+
+            # Step 1: Command hand to fully open (angles = 1000)
+            # Must set force and speed first for hand to move
+            print("[InspireHandDriver] Commanding hand to open...")
+            with self._lock:
+                self.client.write_registers(self.REG_FORCE_SET, [500, 500, 500, 500, 500, 500], device_id=self.device_id)
+                self.client.write_registers(self.REG_SPEED_SET, [500, 500, 500, 500, 500, 500], device_id=self.device_id)
                 self.client.write_registers(self.REG_ANGLE_SET, [1000, 1000, 1000, 1000, 1000, 1000], device_id=self.device_id)
+
+            # Step 2: Verify hand is actually fully open by checking actual angles
+            print("[InspireHandDriver] Waiting for hand to reach fully open position...")
+            open_threshold = 950  # Consider "open" if angle >= 950 (out of 1000)
+            max_wait_time = 5.0   # Maximum 5 seconds to open
+            poll_interval = 0.1   # Check every 100ms
+
+            start_time = time.time()
+            hand_fully_open = False
+
+            while time.time() - start_time < max_wait_time:
+                # Read actual angles and error status (these methods handle their own locking)
+                actual_angles = self._read_registers_short(self.REG_ANGLE_ACT, 6)
+                error_codes = self._read_registers_byte(self.REG_ERROR, 3)
+
+                if actual_angles is None:
+                    print("[InspireHandDriver] Warning: Could not read actual angles")
+                    time.sleep(poll_interval)
+                    continue
+
+                # Check for errors that would prevent opening (first 5 fingers)
+                if error_codes:
+                    errors = error_codes[:5]  # First 5 fingers
+                    if any(err != 0 for err in errors):
+                        print(f"[InspireHandDriver] WARNING: Finger errors detected: {errors}")
+                        print("[InspireHandDriver] Clear errors or check for obstructions")
+                        # Clear errors and try to continue
+                        self.clear_errors()
+
+                # Check if all fingers (0-4) are open (skip finger 5 - thumb rotation)
+                fingers_open = [angle >= open_threshold for angle in actual_angles[:5]]
+
+                if all(fingers_open):
+                    print(f"[InspireHandDriver] Hand fully open (angles: {actual_angles})")
+                    hand_fully_open = True
+                    break
+
+                # Still moving, wait a bit
+                time.sleep(poll_interval)
+
+            if not hand_fully_open:
+                # Timeout - hand didn't fully open
+                actual_angles = self._read_registers_short(self.REG_ANGLE_ACT, 6)
+                error_codes = self._read_registers_byte(self.REG_ERROR, 3)
+                print(f"[InspireHandDriver] WARNING: Hand not fully open after {max_wait_time}s")
+                print(f"[InspireHandDriver] Actual angles: {actual_angles}")
+                print(f"[InspireHandDriver] Error codes: {error_codes[:6] if error_codes else 'N/A'}")
+                print("[InspireHandDriver] Check for obstructions or mechanical issues")
+                print("[InspireHandDriver] Proceeding with calibration anyway (may be inaccurate)")
+
+            # Give a small settling time
+            time.sleep(0.3)
+
+            # Step 3: Trigger force sensor calibration (register 1009)
+            print("[InspireHandDriver] Triggering force sensor calibration...")
+            with self._lock:
                 self.client.write_register(1009, 1, device_id=self.device_id)
-                time.sleep(1.0)
-                print("[InspireHandDriver] Calibration complete")
-                return True
-            except Exception as e:
-                print(f"[InspireHandDriver] Calibration failed: {e}")
-                return False
+            time.sleep(1.0)  # Wait for calibration to complete
+
+            print("[InspireHandDriver] Calibration complete")
+            return True
+        except Exception as e:
+            print(f"[InspireHandDriver] Calibration failed: {e}")
+            return False
 
     def open_hand(self, speed: int = 500) -> bool:
         """Open hand (all fingers extended)."""

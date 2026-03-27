@@ -1,0 +1,9 @@
+# Calibrate.srv - Calibrate force sensors
+# WARNING: Hand must be fully open with no object contact before calling
+
+# Request
+bool reset_to_factory_defaults  # Reset all parameters to factory defaults first (default false)
+---
+# Response
+bool success                     # True if calibration completed successfully
+string message                   # Status message

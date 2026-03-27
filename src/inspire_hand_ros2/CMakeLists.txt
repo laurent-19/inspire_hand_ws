@@ -26,6 +26,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Release.srv"
   "srv/SetFingerPosition.srv"
   "srv/GetHandState.srv"
+  "srv/Calibrate.srv"
   "action/GraspObject.action"
   DEPENDENCIES std_msgs builtin_interfaces action_msgs
 )

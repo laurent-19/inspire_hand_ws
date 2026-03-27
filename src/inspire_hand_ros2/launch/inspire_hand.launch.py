@@ -76,6 +76,12 @@ def generate_launch_description():
         description='Enable slip detection and force compensation'
     )
 
+    auto_calibrate_arg = DeclareLaunchArgument(
+        'auto_calibrate',
+        default_value='false',
+        description='Run force sensor calibration on startup (hand must be fully open)'
+    )
+
     namespace_arg = DeclareLaunchArgument(
         'namespace',
         default_value='inspire_hand',
@@ -105,6 +111,7 @@ def generate_launch_description():
             'default_force': LaunchConfiguration('default_force'),
             'default_speed': LaunchConfiguration('default_speed'),
             'slip_compensation': LaunchConfiguration('slip_compensation'),
+            'auto_calibrate': LaunchConfiguration('auto_calibrate'),
         }],
         output='screen',
         emulate_tty=True
@@ -120,6 +127,7 @@ def generate_launch_description():
         default_force_arg,
         default_speed_arg,
         slip_compensation_arg,
+        auto_calibrate_arg,
         namespace_arg,
         inspire_hand_node
     ])
