@@ -1,0 +1,124 @@
+python -m radius_prediction.train_pointcloud_fast --val_object mid_bottle                                                                                 
+Using device: cuda
+
+Loading data (val_object=mid_bottle)...
+Train samples: 3204
+Val samples: 654
+Train distribution: {'250': 493, '330_fat': 511, '330_slim': 500, '500': 665, 'big_bottle': 440, 'small_bottle': 595}
+Points per sample: 1024
+Input channels: 4 (xyz + intensity)
+
+Model parameters: 3,463,377
+
+Starting training (PointNet optimized)...
+Epochs: 100, Batch size: 32, LR: 0.001
+Epoch   1/100 | Train Loss: 0.1640 | Val Loss: 0.1984 | Val RMSE: 9.80mm | Val MAE: 9.41mm                                                                          
+  -> Saved best model (RMSE: 9.80mm)
+Epoch   2/100 | Train Loss: 0.0795 | Val Loss: 0.1865 | Val RMSE: 9.50mm | Val MAE: 8.83mm                                                                          
+  -> Saved best model (RMSE: 9.50mm)
+Epoch   3/100 | Train Loss: 0.0491 | Val Loss: 0.0887 | Val RMSE: 6.55mm | Val MAE: 5.46mm                                                                          
+  -> Saved best model (RMSE: 6.55mm)
+Epoch   4/100 | Train Loss: 0.0417 | Val Loss: 0.1281 | Val RMSE: 7.87mm | Val MAE: 7.71mm                                                                          
+Epoch   5/100 | Train Loss: 0.0351 | Val Loss: 0.0838 | Val RMSE: 6.37mm | Val MAE: 5.41mm                                                                          
+  -> Saved best model (RMSE: 6.37mm)
+Epoch   6/100 | Train Loss: 0.0287 | Val Loss: 0.0894 | Val RMSE: 6.58mm | Val MAE: 5.21mm                                                                          
+Epoch   7/100 | Train Loss: 0.0320 | Val Loss: 0.0839 | Val RMSE: 6.37mm | Val MAE: 5.13mm                                                                          
+Epoch   8/100 | Train Loss: 0.0408 | Val Loss: 0.1375 | Val RMSE: 8.16mm | Val MAE: 7.89mm                                                                          
+Epoch   9/100 | Train Loss: 0.0278 | Val Loss: 0.1091 | Val RMSE: 7.27mm | Val MAE: 7.12mm                                                                          
+Epoch  10/100 | Train Loss: 0.0299 | Val Loss: 0.0629 | Val RMSE: 5.52mm | Val MAE: 4.39mm                                                                          
+  -> Saved best model (RMSE: 5.52mm)
+Epoch  11/100 | Train Loss: 0.0266 | Val Loss: 0.0758 | Val RMSE: 6.06mm | Val MAE: 4.98mm                                                                          
+Epoch  12/100 | Train Loss: 0.0365 | Val Loss: 0.0898 | Val RMSE: 6.59mm | Val MAE: 5.34mm                                                                          
+Epoch  13/100 | Train Loss: 0.0267 | Val Loss: 0.1248 | Val RMSE: 7.77mm | Val MAE: 7.33mm                                                                          
+Epoch  14/100 | Train Loss: 0.0228 | Val Loss: 0.1402 | Val RMSE: 8.24mm | Val MAE: 7.94mm                                                                          
+Epoch  15/100 | Train Loss: 0.0196 | Val Loss: 0.0587 | Val RMSE: 5.33mm | Val MAE: 3.73mm                                                                          
+  -> Saved best model (RMSE: 5.33mm)
+Epoch  16/100 | Train Loss: 0.0184 | Val Loss: 0.1302 | Val RMSE: 7.94mm | Val MAE: 7.27mm                                                                          
+Epoch  17/100 | Train Loss: 0.0207 | Val Loss: 0.1265 | Val RMSE: 7.82mm | Val MAE: 6.77mm                                                                          
+Epoch  18/100 | Train Loss: 0.0188 | Val Loss: 0.1805 | Val RMSE: 9.35mm | Val MAE: 9.11mm                                                                          
+Epoch  19/100 | Train Loss: 0.0187 | Val Loss: 0.0789 | Val RMSE: 6.18mm | Val MAE: 5.18mm                                                                          
+Epoch  20/100 | Train Loss: 0.0168 | Val Loss: 0.0865 | Val RMSE: 6.47mm | Val MAE: 5.18mm                                                                          
+Epoch  21/100 | Train Loss: 0.0168 | Val Loss: 0.1012 | Val RMSE: 7.00mm | Val MAE: 6.04mm                                                                          
+Epoch  22/100 | Train Loss: 0.0194 | Val Loss: 0.1116 | Val RMSE: 7.35mm | Val MAE: 6.96mm                                                                          
+Epoch  23/100 | Train Loss: 0.0157 | Val Loss: 0.1499 | Val RMSE: 8.52mm | Val MAE: 8.20mm                                                                          
+Epoch  24/100 | Train Loss: 0.0154 | Val Loss: 0.1023 | Val RMSE: 7.04mm | Val MAE: 6.20mm                                                                          
+Epoch  25/100 | Train Loss: 0.0221 | Val Loss: 0.1461 | Val RMSE: 8.41mm | Val MAE: 8.06mm                                                                          
+Epoch  26/100 | Train Loss: 0.0162 | Val Loss: 0.1856 | Val RMSE: 9.48mm | Val MAE: 9.30mm                                                                          
+Epoch  27/100 | Train Loss: 0.0239 | Val Loss: 0.1494 | Val RMSE: 8.50mm | Val MAE: 8.11mm                                                                          
+Epoch  28/100 | Train Loss: 0.0262 | Val Loss: 0.1412 | Val RMSE: 8.27mm | Val MAE: 7.55mm                                                                          
+Epoch  29/100 | Train Loss: 0.0228 | Val Loss: 0.0786 | Val RMSE: 6.17mm | Val MAE: 5.23mm                                                                          
+Epoch  30/100 | Train Loss: 0.0199 | Val Loss: 0.0522 | Val RMSE: 5.03mm | Val MAE: 3.51mm                                                                          
+  -> Saved best model (RMSE: 5.03mm)
+Epoch  31/100 | Train Loss: 0.0175 | Val Loss: 0.0778 | Val RMSE: 6.14mm | Val MAE: 5.46mm                                                                          
+Epoch  32/100 | Train Loss: 0.0166 | Val Loss: 0.1535 | Val RMSE: 8.62mm | Val MAE: 8.18mm                                                                          
+Epoch  33/100 | Train Loss: 0.0167 | Val Loss: 0.0635 | Val RMSE: 5.54mm | Val MAE: 4.35mm                                                                          
+Epoch  34/100 | Train Loss: 0.0174 | Val Loss: 0.2991 | Val RMSE: 12.03mm | Val MAE: 11.61mm                                                                        
+Epoch  35/100 | Train Loss: 0.0310 | Val Loss: 0.0669 | Val RMSE: 5.69mm | Val MAE: 4.62mm                                                                          
+Epoch  36/100 | Train Loss: 0.0206 | Val Loss: 0.0762 | Val RMSE: 6.07mm | Val MAE: 5.20mm                                                                          
+Epoch  37/100 | Train Loss: 0.0168 | Val Loss: 0.0755 | Val RMSE: 6.04mm | Val MAE: 5.03mm                                                                          
+Epoch  38/100 | Train Loss: 0.0164 | Val Loss: 0.1345 | Val RMSE: 8.07mm | Val MAE: 7.18mm                                                                          
+Epoch  39/100 | Train Loss: 0.0166 | Val Loss: 0.1861 | Val RMSE: 9.49mm | Val MAE: 9.33mm                                                                          
+Epoch  40/100 | Train Loss: 0.0296 | Val Loss: 0.1371 | Val RMSE: 8.15mm | Val MAE: 7.39mm                                                                          
+Epoch  41/100 | Train Loss: 0.0186 | Val Loss: 0.0701 | Val RMSE: 5.82mm | Val MAE: 4.93mm                                                                          
+Epoch  42/100 | Train Loss: 0.0150 | Val Loss: 0.0761 | Val RMSE: 6.07mm | Val MAE: 5.10mm                                                                          
+Epoch  43/100 | Train Loss: 0.0153 | Val Loss: 0.0894 | Val RMSE: 6.58mm | Val MAE: 5.42mm                                                                          
+Epoch  44/100 | Train Loss: 0.0169 | Val Loss: 0.0602 | Val RMSE: 5.40mm | Val MAE: 4.27mm                                                                          
+Epoch  45/100 | Train Loss: 0.0164 | Val Loss: 0.0689 | Val RMSE: 5.77mm | Val MAE: 4.38mm                                                                          
+Epoch  46/100 | Train Loss: 0.0154 | Val Loss: 0.0656 | Val RMSE: 5.64mm | Val MAE: 4.19mm                                                                          
+Epoch  47/100 | Train Loss: 0.0179 | Val Loss: 0.0820 | Val RMSE: 6.30mm | Val MAE: 5.08mm                                                                          
+Epoch  48/100 | Train Loss: 0.0153 | Val Loss: 0.0888 | Val RMSE: 6.55mm | Val MAE: 4.91mm                                                                          
+Epoch  49/100 | Train Loss: 0.0143 | Val Loss: 0.0894 | Val RMSE: 6.58mm | Val MAE: 5.89mm                                                                          
+Epoch  50/100 | Train Loss: 0.0144 | Val Loss: 0.1300 | Val RMSE: 7.93mm | Val MAE: 7.20mm                                                                          
+Epoch  51/100 | Train Loss: 0.0153 | Val Loss: 0.1957 | Val RMSE: 9.73mm | Val MAE: 9.67mm                                                                          
+Epoch  52/100 | Train Loss: 0.0244 | Val Loss: 0.0678 | Val RMSE: 5.73mm | Val MAE: 4.83mm                                                                          
+Epoch  53/100 | Train Loss: 0.0146 | Val Loss: 0.0684 | Val RMSE: 5.75mm | Val MAE: 4.34mm                                                                          
+Epoch  54/100 | Train Loss: 0.0144 | Val Loss: 0.1000 | Val RMSE: 6.96mm | Val MAE: 6.14mm                                                                          
+Epoch  55/100 | Train Loss: 0.0156 | Val Loss: 0.0807 | Val RMSE: 6.25mm | Val MAE: 5.66mm                                                                          
+Epoch  56/100 | Train Loss: 0.0138 | Val Loss: 0.0655 | Val RMSE: 5.63mm | Val MAE: 4.53mm                                                                          
+Epoch  57/100 | Train Loss: 0.0133 | Val Loss: 0.0685 | Val RMSE: 5.76mm | Val MAE: 4.93mm                                                                          
+Epoch  58/100 | Train Loss: 0.0141 | Val Loss: 0.1429 | Val RMSE: 8.32mm | Val MAE: 7.75mm                                                                          
+Epoch  59/100 | Train Loss: 0.0124 | Val Loss: 0.1356 | Val RMSE: 8.10mm | Val MAE: 7.52mm                                                                          
+Epoch  60/100 | Train Loss: 0.0126 | Val Loss: 0.1239 | Val RMSE: 7.74mm | Val MAE: 7.13mm                                                                          
+Epoch  61/100 | Train Loss: 0.0162 | Val Loss: 0.1028 | Val RMSE: 7.06mm | Val MAE: 6.18mm                                                                          
+Epoch  62/100 | Train Loss: 0.0193 | Val Loss: 0.1270 | Val RMSE: 7.84mm | Val MAE: 7.04mm                                                                          
+Epoch  63/100 | Train Loss: 0.0152 | Val Loss: 0.0766 | Val RMSE: 6.09mm | Val MAE: 4.90mm                                                                          
+Epoch  64/100 | Train Loss: 0.0137 | Val Loss: 0.1364 | Val RMSE: 8.13mm | Val MAE: 7.49mm                                                                          
+Epoch  65/100 | Train Loss: 0.0139 | Val Loss: 0.0623 | Val RMSE: 5.49mm | Val MAE: 4.27mm                                                                          
+Epoch  66/100 | Train Loss: 0.0130 | Val Loss: 0.1063 | Val RMSE: 7.17mm | Val MAE: 6.36mm                                                                          
+Epoch  67/100 | Train Loss: 0.0149 | Val Loss: 0.0611 | Val RMSE: 5.44mm | Val MAE: 4.35mm                                                                          
+Epoch  68/100 | Train Loss: 0.0140 | Val Loss: 0.0648 | Val RMSE: 5.60mm | Val MAE: 4.67mm                                                                          
+Epoch  69/100 | Train Loss: 0.0130 | Val Loss: 0.0899 | Val RMSE: 6.60mm | Val MAE: 6.05mm                                                                          
+Epoch  70/100 | Train Loss: 0.0128 | Val Loss: 0.0683 | Val RMSE: 5.75mm | Val MAE: 4.66mm                                                                          
+Epoch  71/100 | Train Loss: 0.0124 | Val Loss: 0.1198 | Val RMSE: 7.62mm | Val MAE: 7.24mm                                                                          
+Epoch  72/100 | Train Loss: 0.0127 | Val Loss: 0.0650 | Val RMSE: 5.61mm | Val MAE: 4.82mm                                                                          
+Epoch  73/100 | Train Loss: 0.0169 | Val Loss: 0.0882 | Val RMSE: 6.53mm | Val MAE: 5.40mm                                                                          
+Epoch  74/100 | Train Loss: 0.0142 | Val Loss: 0.0967 | Val RMSE: 6.84mm | Val MAE: 6.13mm                                                                          
+Epoch  75/100 | Train Loss: 0.0138 | Val Loss: 0.0630 | Val RMSE: 5.52mm | Val MAE: 4.49mm                                                                          
+Epoch  76/100 | Train Loss: 0.0122 | Val Loss: 0.0639 | Val RMSE: 5.56mm | Val MAE: 4.36mm                                                                          
+Epoch  77/100 | Train Loss: 0.0124 | Val Loss: 0.0879 | Val RMSE: 6.52mm | Val MAE: 5.80mm                                                                          
+Epoch  78/100 | Train Loss: 0.0126 | Val Loss: 0.1191 | Val RMSE: 7.59mm | Val MAE: 7.20mm                                                                          
+Epoch  79/100 | Train Loss: 0.0119 | Val Loss: 0.0948 | Val RMSE: 6.77mm | Val MAE: 6.19mm                                                                          
+Epoch  80/100 | Train Loss: 0.0120 | Val Loss: 0.1073 | Val RMSE: 7.21mm | Val MAE: 6.67mm                                                                          
+Epoch  81/100 | Train Loss: 0.0124 | Val Loss: 0.0827 | Val RMSE: 6.33mm | Val MAE: 5.57mm                                                                          
+Epoch  82/100 | Train Loss: 0.0120 | Val Loss: 0.1004 | Val RMSE: 6.97mm | Val MAE: 5.95mm                                                                          
+Epoch  83/100 | Train Loss: 0.0121 | Val Loss: 0.1022 | Val RMSE: 7.03mm | Val MAE: 6.12mm                                                                          
+Epoch  84/100 | Train Loss: 0.0118 | Val Loss: 0.1300 | Val RMSE: 7.93mm | Val MAE: 7.26mm                                                                          
+Epoch  85/100 | Train Loss: 0.0119 | Val Loss: 0.0944 | Val RMSE: 6.76mm | Val MAE: 6.03mm                                                                          
+Epoch  86/100 | Train Loss: 0.0118 | Val Loss: 0.0888 | Val RMSE: 6.56mm | Val MAE: 5.74mm                                                                          
+Epoch  87/100 | Train Loss: 0.0117 | Val Loss: 0.0796 | Val RMSE: 6.21mm | Val MAE: 5.31mm                                                                          
+Epoch  88/100 | Train Loss: 0.0120 | Val Loss: 0.0910 | Val RMSE: 6.64mm | Val MAE: 5.71mm                                                                          
+Epoch  89/100 | Train Loss: 0.0116 | Val Loss: 0.1235 | Val RMSE: 7.73mm | Val MAE: 7.06mm                                                                          
+Epoch  90/100 | Train Loss: 0.0117 | Val Loss: 0.1447 | Val RMSE: 8.37mm | Val MAE: 7.94mm                                                                          
+Epoch  91/100 | Train Loss: 0.0114 | Val Loss: 0.1283 | Val RMSE: 7.88mm | Val MAE: 7.35mm                                                                          
+Epoch  92/100 | Train Loss: 0.0115 | Val Loss: 0.1005 | Val RMSE: 6.98mm | Val MAE: 6.07mm                                                                          
+Epoch  93/100 | Train Loss: 0.0115 | Val Loss: 0.0897 | Val RMSE: 6.59mm | Val MAE: 5.79mm                                                                          
+Epoch  94/100 | Train Loss: 0.0115 | Val Loss: 0.1217 | Val RMSE: 7.67mm | Val MAE: 7.01mm                                                                          
+Epoch  95/100 | Train Loss: 0.0116 | Val Loss: 0.0795 | Val RMSE: 6.21mm | Val MAE: 5.12mm                                                                          
+Epoch  96/100 | Train Loss: 0.0111 | Val Loss: 0.0966 | Val RMSE: 6.84mm | Val MAE: 6.07mm                                                                          
+Epoch  97/100 | Train Loss: 0.0114 | Val Loss: 0.0877 | Val RMSE: 6.51mm | Val MAE: 5.66mm                                                                          
+Epoch  98/100 | Train Loss: 0.0114 | Val Loss: 0.0752 | Val RMSE: 6.03mm | Val MAE: 5.00mm                                                                          
+Epoch  99/100 | Train Loss: 0.0112 | Val Loss: 0.0945 | Val RMSE: 6.76mm | Val MAE: 6.00mm                                                                          
+Epoch 100/100 | Train Loss: 0.0114 | Val Loss: 0.0796 | Val RMSE: 6.21mm | Val MAE: 5.46mm                                                                          
+
+Training complete! Best Val RMSE: 5.03mm
+
