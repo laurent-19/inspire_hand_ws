@@ -1,10 +1,15 @@
 # Data Collection Scripts
 
-Scripts for extracting synchronized multi-modal training data from ROS2 bags.
+Scripts for recording and processing synchronized multi-modal training data from ROS2 bags.
 
 ## Overview
 
-The pipeline processes ROS2 bag files containing robot hand grasping data and extracts synchronized samples of:
+This directory contains:
+1. **Recording scripts** - Capture live data from the hand during grasps
+2. **Processing scripts** - Extract synchronized samples from recorded bags
+3. **Visualization scripts** - Inspect extracted samples
+
+The pipeline records ROS2 bag files during grasping operations, then extracts synchronized samples of:
 - Camera RGB images
 - Tactile sensor heatmaps
 - Tactile point clouds (with intensity)
@@ -14,6 +19,36 @@ The pipeline processes ROS2 bag files containing robot hand grasping data and ex
 Bags are automatically classified as **deformable** (empty/soft objects) or **non-deformable** (filled/rigid objects) based on filename.
 
 ## Scripts
+
+### `record.sh`
+
+Records live grasp data from the hand to ROS2 bag format.
+
+**Usage:**
+```bash
+# Record to specified directory
+scripts/record.sh <output_directory>
+
+# Example: Create timestamped recording
+scripts/record.sh grasp_tests/test_cylinder_$(date +%Y%m%d_%H%M%S)
+```
+
+**What it records:**
+- Hand state, control, and tactile data
+- Tactile point clouds (3D visualization with intensity)
+- Cylinder projection (2D unwrapped tactile heatmap)
+- Joint states and TF transforms
+- Camera RGB + depth (if `ROS_DOMAIN_ID=1`)
+- Camera point cloud
+
+**Prerequisites:**
+- Hand driver running: `ros2 launch inspire_hand_ros2 inspire_hand.launch.py`
+- (Optional) Camera topics visible: `export ROS_DOMAIN_ID=1`
+
+**Playback:**
+```bash
+ros2 bag play grasp_tests/test_cylinder_20260331_150000
+```
 
 ### `process_bags.sh`
 
