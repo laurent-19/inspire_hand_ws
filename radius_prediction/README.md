@@ -170,20 +170,6 @@ python -m radius_prediction.train_pointcloud_fast \
 - ~2-3 min/epoch with 1024 points
 - ~3-4 hours for full training (100 epochs)
 
-### Training Tips
-
-**Early stopping:**
-- Both models use early stopping (patience=100)
-- Training stops if validation RMSE doesn't improve for 100 epochs
-
-**Monitoring:**
-- Models save checkpoints to `radius_prediction/checkpoints/`
-- Best model: `best_{model_type}_{val_object}.pt`
-
-**GPU utilization:**
-- Joint model: ~10-20% GPU usage (CPU-bound from image loading)
-- PointNet: ~30-50% GPU usage (CPU-bound from FPS)
-
 ## Inference
 
 ### Quick Testing (Helper Scripts)
@@ -233,34 +219,6 @@ Best Val RMSE: 5.03 mm
 Best Val MAE:  3.51 mm
 ```
 
-### Programmatic Use
-
-```python
-import torch
-from pathlib import Path
-from radius_prediction.models.joint_model import JointRadiusModel
-from radius_prediction.data.joint_dataset import JointDataset
-
-# Load model
-device = torch.device('cuda')
-checkpoint = torch.load('radius_prediction/checkpoints/best_joint_mid_bottle.pt')
-model = JointRadiusModel(use_image=False)
-model.load_state_dict(checkpoint['model_state_dict'])
-model = model.to(device)
-model.eval()
-
-# Load sample
-dataset = JointDataset(split='val', val_object='mid_bottle', use_image=False)
-joints, target = dataset[0]
-joints = joints.unsqueeze(0).to(device)
-
-# Predict
-with torch.no_grad():
-    pred_mm = model(joints).item()
-
-print(f"Predicted radius: {pred_mm:.2f} mm")
-```
-
 ## Evaluation
 
 **Full evaluation on validation set:**
@@ -290,109 +248,6 @@ Per-Object Metrics:
   500               : MAE=4.77mm, RMSE=4.82mm, n=665
   ...
 ```
-
-## Logic & Approach
-
-### Problem Formulation
-
-**Goal:** Predict the radius of a grasped cylindrical object from sensor data
-
-**Why this matters:**
-- Object size estimation for grasp planning
-- Quality control in manipulation tasks
-- Shape inference from tactile feedback
-
-**Challenge:** Generalization to unseen object types
-- Training on 6 object types, testing on the 7th
-- Tests if model learns radius from grasp patterns, not object-specific features
-
-### Model Design Rationale
-
-#### Model 1: Joint States
-**Hypothesis:** Joint closure directly correlates with object radius
-- Larger objects → joints less closed
-- Smaller objects → joints more closed
-
-**Why it works:**
-- Direct mechanical relationship between radius and joint angles
-- Fast and lightweight (76K parameters)
-- Surprisingly effective: ~4.5mm error
-
-**Limitation:**
-- Doesn't use rich tactile information
-- May struggle with deformable or irregularly shaped objects
-
-#### Model 2: PointNet
-**Hypothesis:** 3D tactile geometry encodes object curvature
-- Point cloud reflects object surface shape
-- Intensity (pressure) provides contact information
-
-**Architecture choice:**
-- PointNet: Permutation-invariant to point order
-- TNet: Learns canonical alignment of tactile data
-- Feature transform: Aligns features in learned space
-
-**Why tactile?**
-- Direct contact with object surface
-- Captures local curvature information
-- Pressure distribution varies with radius
-
-**Limitation:**
-- Requires more data to converge
-- Computationally expensive
-- Sensitive to tactile sensor calibration
-
-### Data Pipeline
-
-**Preprocessing:**
-1. **FPS (Farthest Point Sampling)**: Downsample ~7500 points → 1024
-   - Ensures uniform spatial coverage
-   - Reduces computation while preserving geometry
-2. **Normalization**: Center and scale to [-1, 1]
-   - Makes model invariant to hand position
-3. **Augmentation** (training only):
-   - Rotation (Z-axis): Orientation invariance
-   - Scale (0.8-1.2): Size robustness
-   - Translation (±0.1): Position invariance
-   - Point dropout (0-50%): Occlusion robustness
-   - Intensity noise: Sensor noise robustness
-
-**Why leave-one-object-out?**
-- Tests true generalization, not memorization
-- Simulates real-world scenario: grasping new objects
-- More challenging than random split (prevents data leakage)
-
-### Loss Function
-
-**Joint model:** MSE Loss + ReLU output
-```python
-loss = MSE(pred_radius, gt_radius)
-output = ReLU(linear(features))  # Ensures positive radius
-```
-
-**PointNet:** MSE + Feature Transform Regularization
-```python
-loss = MSE(pred, target) + λ * ||T^T·T - I||²
-```
-- Regularization prevents transformation network from learning arbitrary (unstable) transforms
-- λ = 0.001 (from PointNet paper)
-
-### Expected Performance
-
-| Model | Training Objects | Val Object | RMSE | MAE |
-|-------|-----------------|------------|------|-----|
-| Joint | 250, 330_fat, 330_slim, 500, small_bottle, big_bottle | mid_bottle | ~4.5mm | ~3.6mm |
-| PointNet | Same | mid_bottle | ~8-9mm | ~7-8mm |
-
-**Note:** PointNet improves with more training epochs (100+)
-
-### Future Improvements
-
-1. **Data augmentation:** Synthetic occlusions, sensor dropout patterns
-2. **Architecture:** Try PointNet++, DGCNN for better local feature learning
-3. **Multi-task learning:** Joint prediction of radius + shape class
-4. **Ensemble:** Combine joint and tactile predictions
-5. **Active learning:** Collect more data for challenging object sizes
 
 ## File Structure
 
@@ -431,36 +286,5 @@ radius_prediction/
 
 - **PointNet**: Charles et al., "PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation", CVPR 2017
 - **PointNet++**: Qi et al., "PointNet++: Deep Hierarchical Feature Learning on Point Sets", NeurIPS 2017
-- **ge2018**: Ge et al., "Point-to-Point Regression PointNet for 3D Hand Pose Estimation", ECCV 2018 (inspiration for tactile processing)
+- **Ge2018**: Ge et al., "Point-to-Point Regression PointNet for 3D Hand Pose Estimation", ECCV 2018 (inspiration for tactile processing)
 
-## Troubleshooting
-
-**Issue: "CUDA out of memory"**
-- Reduce batch size: `--batch_size 16` or `--batch_size 8`
-- Reduce points: `--num_points 512`
-
-**Issue: Training is very slow**
-- Use `train_pointcloud_fast.py` instead of `train_pointcloud.py`
-- Reduce `--num_points` to 512 or 1024
-- Check GPU utilization with `nvidia-smi`
-
-**Issue: Poor predictions**
-- Ensure you trained for enough epochs (100+ recommended)
-- Check validation object in checkpoint config
-- Verify normalization range matches training data
-
-**Issue: Model predicts constant value**
-- Model needs more training
-- Check learning rate (may be too low/high)
-- Verify data is properly normalized
-
-## Citation
-
-```bibtex
-@software{radius_prediction_2026,
-  author = {Laurent-19 and Claude Opus 4.6},
-  title = {Neural Network Models for Grasp Radius Prediction},
-  year = {2026},
-  institution = {Analog Devices}
-}
-```
