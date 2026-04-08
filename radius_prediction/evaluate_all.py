@@ -11,6 +11,7 @@ from collections import defaultdict
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
@@ -219,7 +220,15 @@ def load_csv(csv_path):
 
 
 def plot_from_csv(csv_path, output_path=None):
-    """Plot distribution from CSV file."""
+    """Plot distribution from CSV file in 7x2 grid (non-deformable | deformable)."""
+    # ICRA-style rcParams
+    plt.rcParams.update({
+        "font.size": 14,
+        "axes.titlesize": 14,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+    })
+
     results = load_csv(csv_path)
 
     # Group by dataset_type and object_name
@@ -231,67 +240,122 @@ def plot_from_csv(csv_path, output_path=None):
     # Get ground truths
     gt_map = {r["object_name"]: r["ground_truth_mm"] for r in results}
 
-    # Sort: non-deformable first, then deformable, each sorted by radius
-    sorted_keys = sorted(groups.keys(),
-                         key=lambda x: (0 if x[0] == "non_deformable" else 1, gt_map[x[1]]))
+    # Custom order: cans first (by size), then bottles (by size)
+    class_order = ["250", "330_slim", "330_fat", "500", "small_bottle", "mid_bottle", "big_bottle"]
+    order_map = {name: i for i, name in enumerate(class_order)}
 
-    n_rows = len(sorted_keys)
-    fig, axes = plt.subplots(n_rows, 1, figsize=(12, 1.5 * n_rows), sharex=True)
-    fig.subplots_adjust(left=0.18)  # More space for horizontal labels
+    # Separate by dataset type and sort by custom order
+    non_def_keys = sorted(
+        [k for k in groups.keys() if k[0] == "non_deformable"],
+        key=lambda x: order_map.get(x[1], 999)
+    )
+    def_keys = sorted(
+        [k for k in groups.keys() if k[0] == "deformable"],
+        key=lambda x: order_map.get(x[1], 999)
+    )
 
-    if n_rows == 1:
-        axes = [axes]
+    n_rows = max(len(non_def_keys), len(def_keys))
+    fig, axes = plt.subplots(n_rows, 2, figsize=(10, 0.8 * n_rows), sharex=True)
 
     # Colors
     colors = {
-        "non_deformable": "#5DADE2",  # Light blue
-        "deformable": "#85C1E9",      # Lighter blue
+        "non_deformable": "#1f77b4",  # Blue
+        "deformable": "#ff7f0e",      # Orange
     }
 
-    for ax, (dtype, obj_name) in zip(axes, sorted_keys):
+    # Display names for clearer labels
+    display_names = {
+        "250": "250 ml can",
+        "330_slim": "330 ml slim can",
+        "330_fat": "330 ml can",
+        "500": "500 ml can",
+        "small_bottle": "500 ml bottle",
+        "mid_bottle": "1 L bottle",
+        "big_bottle": "1.5 L bottle",
+    }
+
+    def plot_histogram(ax, dtype, obj_name, col):
+        """Plot histogram for a single class."""
         preds = groups[(dtype, obj_name)]
         gt = gt_map[obj_name]
-        n_samples = len(preds)
 
         # Histogram
-        ax.hist(preds, bins=30, range=(20, 50),
-                color=colors.get(dtype, "#5DADE2"),
+        ax.hist(preds, bins=25, range=(25, 50),
+                color=colors[dtype],
                 alpha=0.7, edgecolor='white', linewidth=0.5)
 
-        # Ground truth line
-        ax.axvline(gt, color='red', linestyle='--', linewidth=2)
+        # Ground truth line (reduced height)
+        ax.axvline(gt, color='red', linestyle='--', linewidth=1.5, ymax=0.85)
 
-        # Y-axis label: class name on first line, n= on second line, horizontal
-        label = f"{obj_name}" if dtype == "non_deformable" else f"{obj_name}_empty"
-        ax.set_ylabel(f"{label}\nn={n_samples}", fontsize=9, rotation=0, ha='right', va='center')
-        ax.set_xlim(20, 50)
-        ax.tick_params(axis='y', labelsize=7)
+        # Y-axis label: use display name with both sample counts (left column only)
+        if col == 0:
+            base_name = display_names.get(obj_name, obj_name)
+            n_non_def = len(groups.get(("non_deformable", obj_name), []))
+            n_def = len(groups.get(("deformable", obj_name), []))
+            ax.set_ylabel(f"{base_name}\nn={n_non_def}/{n_def}", rotation=0, ha='right', va='center')
 
-        # Background color to distinguish types
-        if dtype == "deformable":
-            ax.set_facecolor('#f8f8f8')
+        ax.set_xlim(25, 50)
 
+        # Y-axis formatter
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+
+        # Grid
+        ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.4)
+
+        # Clean spines
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
-    axes[-1].set_xlabel('Radius (mm)', fontsize=11)
+    # Plot non-deformable (left column)
+    for row, (dtype, obj_name) in enumerate(non_def_keys):
+        plot_histogram(axes[row, 0], dtype, obj_name, col=0)
 
-    # Legend
+    # Plot deformable (right column)
+    for row, (dtype, obj_name) in enumerate(def_keys):
+        plot_histogram(axes[row, 1], dtype, obj_name, col=1)
+
+    # Set same y-scale for all subplots
+    max_ylim = max(ax.get_ylim()[1] for ax in axes.flat if ax.get_visible())
+    for ax in axes.flat:
+        if ax.get_visible():
+            ax.set_ylim(0, max_ylim)
+
+    # Hide unused axes if columns have different lengths
+    for row in range(len(non_def_keys), n_rows):
+        axes[row, 0].set_visible(False)
+    for row in range(len(def_keys), n_rows):
+        axes[row, 1].set_visible(False)
+
+    # Set x-ticks: regular intervals only
+    regular_ticks = [25, 30, 35, 40, 45, 50]
+
+    # Apply x-ticks to bottom row of each column
+    for col in range(2):
+        bottom_row = len(non_def_keys) - 1 if col == 0 else len(def_keys) - 1
+        if bottom_row >= 0:
+            axes[bottom_row, col].set_xticks(regular_ticks)
+
+    # Single centered x-axis label
+    fig.text(0.5, -0.02, 'Radius (mm)', ha='center', fontsize=14)
+
+    # Legend (centered above figure)
     from matplotlib.patches import Patch
     from matplotlib.lines import Line2D
     legend_elements = [
-        Patch(facecolor=colors["non_deformable"], alpha=0.7, label='non_deformable'),
-        Patch(facecolor=colors["deformable"], alpha=0.7, label='deformable'),
-        Line2D([0], [0], color='red', linestyle='--', linewidth=2, label='ground truth'),
+        Patch(facecolor=colors["non_deformable"], alpha=0.7, label='Non-deformable\n(validation dataset)'),
+        Patch(facecolor=colors["deformable"], alpha=0.7, label='Deformable\n(full dataset)'),
+        Line2D([0], [0], color='red', linestyle='--', linewidth=2, label='Ground Truth'),
     ]
-    axes[0].legend(handles=legend_elements, loc='upper right', fontsize=8)
+    fig.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 1.02),
+               ncol=3, fontsize=14, frameon=False, columnspacing=1.0)
 
-    fig.suptitle('Predicted Radius Distribution by Object Class', fontsize=13, fontweight='bold')
+    # Note for n= at bottom left
+    fig.text(0.02, -0.02, 'n = no. of samples left/right', fontsize=12, ha='left', style='italic')
 
-    plt.tight_layout()
+    plt.subplots_adjust(left=0.12, right=0.88, top=0.90, bottom=0.08, hspace=0.5, wspace=0.3)
 
     if output_path:
-        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"Saved plot to: {output_path}")
 
     plt.show()

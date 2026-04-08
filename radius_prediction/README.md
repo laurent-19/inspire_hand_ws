@@ -78,20 +78,20 @@ python -m radius_prediction.evaluate_all --table_only
 
 | Class | Type | n | GT (mm) | Mean (mm) | Std (mm) | MAE (mm) |
 |-------|------|---|---------|-----------|----------|----------|
-| 250 | non_deformable | 104 | 24.0 | 26.9 | 0.5 | 2.9 |
-| 330_slim | non_deformable | 108 | 29.0 | 29.2 | 1.9 | 1.8 |
-| small_bottle | non_deformable | 103 | 32.5 | 32.2 | 1.6 | 1.6 |
-| 330_fat | non_deformable | 107 | 33.0 | 31.3 | 0.8 | 1.7 |
-| 500 | non_deformable | 157 | 33.0 | 31.7 | 0.6 | 1.3 |
-| mid_bottle | non_deformable | 148 | 39.5 | 36.4 | 1.3 | 3.1 |
-| big_bottle | non_deformable | 81 | 46.0 | 40.0 | 0.5 | 6.0 |
-| 250_empty | deformable | 237 | 24.0 | 27.7 | 1.2 | 3.7 |
-| 330_slim_empty | deformable | 190 | 29.0 | 27.1 | 0.3 | 1.9 |
-| small_bottle_empty | deformable | 283 | 32.5 | 28.1 | 2.0 | 4.4 |
-| 330_fat_empty | deformable | 317 | 33.0 | 27.8 | 1.7 | 5.2 |
-| 500_empty | deformable | 204 | 33.0 | 28.2 | 1.1 | 4.8 |
-| mid_bottle_empty | deformable | 262 | 39.5 | 29.8 | 1.6 | 9.7 |
-| big_bottle_empty | deformable | 396 | 46.0 | 32.2 | 2.0 | 13.8 |
+| 250 ml can | non_deformable | 104 | 24.0 | 26.9 | 0.5 | 2.9 |
+| 330 ml slim can | non_deformable | 108 | 29.0 | 29.2 | 1.9 | 1.8 |
+| 330 ml can | non_deformable | 107 | 33.0 | 31.3 | 0.8 | 1.7 |
+| 500 ml can | non_deformable | 157 | 33.0 | 31.7 | 0.6 | 1.3 |
+| 500 ml bottle | non_deformable | 103 | 32.5 | 32.2 | 1.6 | 1.6 |
+| 1 L bottle | non_deformable | 148 | 39.5 | 36.4 | 1.3 | 3.1 |
+| 1.5 L bottle | non_deformable | 81 | 46.0 | 40.0 | 0.5 | 6.0 |
+| 250 ml can (empty) | deformable | 237 | 24.0 | 27.7 | 1.2 | 3.7 |
+| 330 ml slim can (empty) | deformable | 190 | 29.0 | 27.1 | 0.3 | 1.9 |
+| 330 ml can (empty) | deformable | 317 | 33.0 | 27.8 | 1.7 | 5.2 |
+| 500 ml can (empty) | deformable | 204 | 33.0 | 28.2 | 1.1 | 4.8 |
+| 500 ml bottle (empty) | deformable | 283 | 32.5 | 28.1 | 2.0 | 4.4 |
+| 1 L bottle (empty) | deformable | 262 | 39.5 | 29.8 | 1.6 | 9.7 |
+| 1.5 L bottle (empty) | deformable | 396 | 46.0 | 32.2 | 2.0 | 13.8 |
 | **OVERALL** | **non_deformable** | **808** | - | - | - | **2.5** |
 | **OVERALL** | **deformable** | **1889** | - | - | - | **6.9** |
 
@@ -103,7 +103,7 @@ python -m radius_prediction.evaluate_all --table_only
 - Non-deformable (validation): MAE = 2.5mm
 - Deformable (all data): MAE = 6.9mm
 - Model under-predicts on deformable objects (compressed bottles appear smaller)
-- Larger radii show higher error (big_bottle: 6.0mm, big_bottle_empty: 13.8mm MAE)
+- Larger radii show higher error (1.5 L bottle: 6.0mm, 1.5 L bottle empty: 13.8mm MAE)
 
 ---
 
@@ -206,14 +206,14 @@ xyz = xyz * scale
 ```
 training_data/
 ├── non_deformable/            # Rigid objects (training + validation)
-│   ├── record_250_3/          # 24.0mm radius, bag 3
-│   ├── record_250_4/          # 24.0mm radius, bag 4
-│   ├── record_330_fat_3/      # 33.0mm radius (fat variant)
-│   ├── record_330_slim_3/     # 29.0mm radius (slim variant)
-│   ├── record_500_3/          # 33.0mm radius cylinder
-│   ├── record_small_bottle_3/ # 32.5mm radius
-│   ├── record_mid_bottle_3/   # 39.5mm radius
-│   └── record_big_bottle_3/   # 46.0mm radius
+│   ├── record_250_3/          # 250 ml can (r=24.0mm)
+│   ├── record_250_4/          # 250 ml can (r=24.0mm)
+│   ├── record_330_slim_3/     # 330 ml slim can (r=29.0mm)
+│   ├── record_330_fat_3/      # 330 ml can (r=33.0mm)
+│   ├── record_500_3/          # 500 ml can (r=33.0mm)
+│   ├── record_small_bottle_3/ # 500 ml bottle (r=32.5mm)
+│   ├── record_mid_bottle_3/   # 1 L bottle (r=39.5mm)
+│   └── record_big_bottle_3/   # 1.5 L bottle (r=46.0mm)
 │
 └── deformable/                # Empty bottles (evaluation only)
     ├── record_250_empty_3/
@@ -239,13 +239,13 @@ Each sample contains:
 ### Label Mapping
 ```python
 OBJECT_TO_RADIUS = {
-    "250": 24.0,           # mm
-    "330_fat": 33.0,
-    "330_slim": 29.0,
-    "500": 33.0,
-    "small_bottle": 32.5,
-    "mid_bottle": 39.5,
-    "big_bottle": 46.0,
+    "250": 24.0,           # 250 ml can
+    "330_slim": 29.0,      # 330 ml slim can
+    "330_fat": 33.0,       # 330 ml can
+    "500": 33.0,           # 500 ml can
+    "small_bottle": 32.5,  # 500 ml bottle
+    "mid_bottle": 39.5,    # 1 L bottle
+    "big_bottle": 46.0,    # 1.5 L bottle
 }
 ```
 

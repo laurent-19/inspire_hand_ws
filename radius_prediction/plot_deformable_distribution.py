@@ -9,6 +9,7 @@ from collections import defaultdict
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
@@ -160,19 +161,26 @@ def run_inference(model, dataloader, device):
 
 def plot_distribution(predictions_by_class, gt_by_class, output_path=None):
     """Plot radius distribution per class with ground truth line."""
+    # ICRA-style rcParams
+    plt.rcParams.update({
+        "font.size": 14,
+        "axes.titlesize": 14,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+    })
 
     # Sort classes by ground truth radius
     classes = sorted(predictions_by_class.keys(),
                      key=lambda x: gt_by_class[x])
 
     n_classes = len(classes)
-    fig, axes = plt.subplots(n_classes, 1, figsize=(10, 2 * n_classes),
+    fig, axes = plt.subplots(n_classes, 1, figsize=(10, 1.8 * n_classes),
                               sharex=True)
 
     if n_classes == 1:
         axes = [axes]
 
-    pred_color = '#85C1E9'  # Light blue for deformable
+    pred_color = '#ff7f0e'  # Orange for deformable
 
     for ax, obj_name in zip(axes, classes):
         preds = predictions_by_class[obj_name]
@@ -185,27 +193,33 @@ def plot_distribution(predictions_by_class, gt_by_class, output_path=None):
 
         # Ground truth line
         ax.axvline(gt_radius, color='red', linestyle='--', linewidth=2,
-                   label='ground truth')
+                   label='Ground Truth')
 
         # Labels - add _empty suffix for clarity
-        ax.set_ylabel(f'{obj_name}_empty\n(n={n_samples})', fontsize=9)
+        ax.set_ylabel(f'{obj_name}_empty\nn={n_samples}', rotation=0, ha='right', va='center')
         ax.set_xlim(20, 50)
-        ax.tick_params(axis='y', labelsize=8)
 
+        # Y-axis formatter
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+
+        # Grid
+        ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.4)
+
+        # Clean spines
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
-    axes[-1].set_xlabel('Predicted Radius (mm)', fontsize=11)
+    axes[-1].set_xlabel('Predicted Radius (mm)')
 
     fig.suptitle('Predicted Radius Distribution - Deformable Objects\n(Model trained on non-deformable only)',
-                 fontsize=13, fontweight='bold')
+                 fontweight='bold', y=0.98)
 
-    axes[0].legend(loc='upper right', fontsize=9)
+    axes[0].legend(loc='upper right')
 
-    plt.tight_layout()
+    plt.subplots_adjust(left=0.18, right=0.95, top=0.90, bottom=0.06, hspace=0.4)
 
     if output_path:
-        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"Saved plot to: {output_path}")
 
     plt.show()
