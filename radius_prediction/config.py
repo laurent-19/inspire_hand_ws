@@ -49,6 +49,22 @@ POINTNET_CONFIG = {
     "dropout": 0.4,
 }
 
+# PointNet++ model config
+POINTNETPP_CONFIG = {
+    "num_points": 1024,
+    "input_channels": 7,  # xyz(3) + intensity(1) + normals(3)
+    "use_normals": True,
+    "use_intensity": True,
+    "dropout": 0.4,
+    "normal_k_neighbors": 30,
+    # Set Abstraction layer configs
+    "sa_configs": [
+        {"npoint": 512, "radius": 0.1, "nsample": 32, "mlp": [64, 64, 128]},
+        {"npoint": 128, "radius": 0.2, "nsample": 64, "mlp": [128, 128, 256]},
+        {"npoint": 32, "radius": 0.4, "nsample": 128, "mlp": [256, 512, 1024]},
+    ],
+}
+
 # Training config - Joint model (joint-only)
 TRAIN_JOINT_CONFIG = {
     "batch_size": 32,
@@ -78,6 +94,16 @@ TRAIN_POINTNET_CONFIG = {
     "patience": 100,
     "scheduler": "cosine",
     "feature_transform_weight": 0.001,
+}
+
+# Training config - PointNet++ model
+TRAIN_POINTNETPP_CONFIG = {
+    "batch_size": 16,  # Smaller due to higher memory usage
+    "learning_rate": 1e-3,
+    "weight_decay": 1e-4,
+    "epochs": 100,
+    "patience": 100,
+    "scheduler": "cosine",
 }
 
 # Data augmentation config
