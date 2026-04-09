@@ -72,38 +72,38 @@ python -m radius_prediction.evaluate_all --table_only
 
 ---
 
-## Results (1 Epoch Model)
+## Results (63 Epoch Model)
 
 ### Summary Table
 
 | Class | Type | n | GT (mm) | Mean (mm) | Std (mm) | MAE (mm) |
 |-------|------|---|---------|-----------|----------|----------|
-| 250 ml can | non_deformable | 104 | 24.0 | 26.9 | 0.5 | 2.9 |
-| 330 ml slim can | non_deformable | 108 | 29.0 | 29.2 | 1.9 | 1.8 |
-| 330 ml can | non_deformable | 107 | 33.0 | 31.3 | 0.8 | 1.7 |
-| 500 ml can | non_deformable | 157 | 33.0 | 31.7 | 0.6 | 1.3 |
-| 500 ml bottle | non_deformable | 103 | 32.5 | 32.2 | 1.6 | 1.6 |
-| 1 L bottle | non_deformable | 148 | 39.5 | 36.4 | 1.3 | 3.1 |
-| 1.5 L bottle | non_deformable | 81 | 46.0 | 40.0 | 0.5 | 6.0 |
-| 250 ml can (empty) | deformable | 237 | 24.0 | 27.7 | 1.2 | 3.7 |
-| 330 ml slim can (empty) | deformable | 190 | 29.0 | 27.1 | 0.3 | 1.9 |
-| 330 ml can (empty) | deformable | 317 | 33.0 | 27.8 | 1.7 | 5.2 |
-| 500 ml can (empty) | deformable | 204 | 33.0 | 28.2 | 1.1 | 4.8 |
-| 500 ml bottle (empty) | deformable | 283 | 32.5 | 28.1 | 2.0 | 4.4 |
-| 1 L bottle (empty) | deformable | 262 | 39.5 | 29.8 | 1.6 | 9.7 |
-| 1.5 L bottle (empty) | deformable | 396 | 46.0 | 32.2 | 2.0 | 13.8 |
-| **OVERALL** | **non_deformable** | **808** | - | - | - | **2.5** |
-| **OVERALL** | **deformable** | **1889** | - | - | - | **6.9** |
+| 250 ml can | non_deformable | 104 | 24.0 | 24.6 | 1.1 | 0.6 |
+| 330 ml slim can | non_deformable | 108 | 29.0 | 31.2 | 2.3 | 2.2 |
+| 330 ml can | non_deformable | 107 | 33.0 | 32.8 | 0.2 | 0.2 |
+| 500 ml can | non_deformable | 157 | 33.0 | 32.9 | 0.2 | 0.1 |
+| 500 ml bottle | non_deformable | 103 | 32.5 | 33.5 | 1.2 | 1.1 |
+| 1 L bottle | non_deformable | 148 | 39.5 | 39.4 | 0.9 | 0.6 |
+| 1.5 L bottle | non_deformable | 81 | 46.0 | 45.4 | 0.3 | 0.6 |
+| 250 ml can (empty) | deformable | 237 | 24.0 | 30.5 | 5.1 | 6.5 |
+| 330 ml slim can (empty) | deformable | 190 | 29.0 | 34.1 | 2.0 | 5.1 |
+| 330 ml can (empty) | deformable | 317 | 33.0 | 29.9 | 2.5 | 3.8 |
+| 500 ml can (empty) | deformable | 204 | 33.0 | 26.8 | 3.6 | 6.6 |
+| 500 ml bottle (empty) | deformable | 283 | 32.5 | 31.0 | 3.7 | 3.3 |
+| 1 L bottle (empty) | deformable | 262 | 39.5 | 32.0 | 3.0 | 7.7 |
+| 1.5 L bottle (empty) | deformable | 396 | 46.0 | 34.6 | 2.6 | 11.4 |
+| **OVERALL** | **non_deformable** | **808** | - | - | - | **0.7** |
+| **OVERALL** | **deformable** | **1889** | - | - | - | **6.6** |
 
 ### Prediction Distribution
 
 ![Evaluation Plot](doc/evaluation_plot.png)
 
 **Key observations:**
-- Non-deformable (validation): MAE = 2.5mm
-- Deformable (all data): MAE = 6.9mm
-- Model under-predicts on deformable objects (compressed bottles appear smaller)
-- Larger radii show higher error (1.5 L bottle: 6.0mm, 1.5 L bottle empty: 13.8mm MAE)
+- Non-deformable (validation): MAE = 0.7mm
+- Deformable (full dataset): MAE = 6.6mm
+- Model accurately predicts rigid object radii (sub-mm accuracy on cans)
+- Deformable objects compress during grasping, causing systematic under/over-prediction
 
 ---
 
@@ -171,7 +171,7 @@ Input: 1024 points x 7 channels (xyz + intensity + normal_xyz)
 **Model characteristics:**
 - **Parameters**: ~1.5M
 - **Training time**: ~7 min/epoch on GPU (RTX 4000 Ada)
-- **Performance**: 2.5mm MAE on validation, 2.9mm RMSE (1 epoch)
+- **Performance**: 0.7mm MAE on validation, 1.4mm RMSE (63 epochs)
 
 ---
 

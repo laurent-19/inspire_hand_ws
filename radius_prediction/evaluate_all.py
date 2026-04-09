@@ -265,13 +265,13 @@ def plot_from_csv(csv_path, output_path=None):
 
     # Display names for clearer labels
     display_names = {
-        "250": "250 ml can",
-        "330_slim": "330 ml slim can",
-        "330_fat": "330 ml can",
-        "500": "500 ml can",
-        "small_bottle": "500 ml bottle",
-        "mid_bottle": "1 L bottle",
-        "big_bottle": "1.5 L bottle",
+        "250": "250mL\ncan",
+        "330_slim": "330mL\nslim can",
+        "330_fat": "330mL\ncan",
+        "500": "500mL\ncan",
+        "small_bottle": "500mL\nbottle",
+        "mid_bottle": "1L\nbottle",
+        "big_bottle": "1.5L\nbottle",
     }
 
     def plot_histogram(ax, dtype, obj_name, col):
@@ -280,21 +280,19 @@ def plot_from_csv(csv_path, output_path=None):
         gt = gt_map[obj_name]
 
         # Histogram
-        ax.hist(preds, bins=25, range=(25, 50),
+        ax.hist(preds, bins=30, range=(20, 50),
                 color=colors[dtype],
                 alpha=0.7, edgecolor='white', linewidth=0.5)
 
         # Ground truth line (reduced height)
-        ax.axvline(gt, color='red', linestyle='--', linewidth=1.5, ymax=0.85)
+        ax.axvline(gt, color='red', linestyle='--', linewidth=2.5, ymax=0.85)
 
-        # Y-axis label: use display name with both sample counts (left column only)
+        # Y-axis label: use display name (left column only)
         if col == 0:
             base_name = display_names.get(obj_name, obj_name)
-            n_non_def = len(groups.get(("non_deformable", obj_name), []))
-            n_def = len(groups.get(("deformable", obj_name), []))
-            ax.set_ylabel(f"{base_name}\nn={n_non_def}/{n_def}", rotation=0, ha='right', va='center')
+            ax.set_ylabel(base_name, rotation=0, ha='right', va='center')
 
-        ax.set_xlim(25, 50)
+        ax.set_xlim(20, 50)
 
         # Y-axis formatter
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
@@ -327,7 +325,7 @@ def plot_from_csv(csv_path, output_path=None):
         axes[row, 1].set_visible(False)
 
     # Set x-ticks: regular intervals only
-    regular_ticks = [25, 30, 35, 40, 45, 50]
+    regular_ticks = [20, 25, 30, 35, 40, 45, 50]
 
     # Apply x-ticks to bottom row of each column
     for col in range(2):
@@ -342,15 +340,15 @@ def plot_from_csv(csv_path, output_path=None):
     from matplotlib.patches import Patch
     from matplotlib.lines import Line2D
     legend_elements = [
-        Patch(facecolor=colors["non_deformable"], alpha=0.7, label='Non-deformable\n(validation dataset)'),
-        Patch(facecolor=colors["deformable"], alpha=0.7, label='Deformable\n(full dataset)'),
+        Patch(facecolor=colors["non_deformable"], alpha=0.7, label='Non-deformable'),
+        Patch(facecolor=colors["deformable"], alpha=0.7, label='Deformable'),
         Line2D([0], [0], color='red', linestyle='--', linewidth=2, label='Ground Truth'),
     ]
     fig.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 1.02),
                ncol=3, fontsize=14, frameon=False, columnspacing=1.0)
 
-    # Note for n= at bottom left
-    fig.text(0.02, -0.02, 'n = no. of samples left/right', fontsize=12, ha='left', style='italic')
+    # Y-axis label above the axis
+    fig.text(0.06, 0.92, 'n samples', fontsize=14, ha='left', va='bottom')
 
     plt.subplots_adjust(left=0.12, right=0.88, top=0.90, bottom=0.08, hspace=0.5, wspace=0.3)
 
