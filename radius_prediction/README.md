@@ -105,6 +105,25 @@ python -m radius_prediction.evaluate_all --table_only
 - Model accurately predicts rigid object radii (sub-mm accuracy on cans)
 - Deformable objects compress during grasping, causing systematic under/over-prediction
 
+### PointNet++ vs RANSAC Comparison
+
+| Method | Type | 250ml | 330ml slim | 330ml | 500ml | 500ml bot. | 1L bot. | 1.5L bot. | Overall |
+|--------|------|-------|------------|-------|-------|------------|---------|-----------|---------|
+| **PointNet++** | Rigid MAE | **0.6** | 2.2 | **0.2** | **0.1** | 1.1 | **0.6** | **0.6** | **0.7** |
+| **PointNet++** | Rigid Std | 1.1 | 2.3 | 0.2 | 0.2 | 1.2 | 0.9 | 0.3 | - |
+| **PointNet++** | Deform MAE | **3.7** | **5.1** | **3.8** | **6.6** | **3.3** | **7.7** | **11.4** | **6.6** |
+| **PointNet++** | Deform Std | 5.1 | 2.0 | 2.5 | 3.6 | 3.7 | 3.0 | 2.6 | - |
+| RANSAC | Rigid MAE | 20.2 | 3.3 | 4.3 | 6.9 | 5.0 | 4.7 | 10.6 | 7.5 |
+| RANSAC | Rigid Std | 23.0 | 3.9 | 9.4 | 5.6 | 5.2 | 4.0 | 5.3 | - |
+| RANSAC | Deform MAE | 9.9 | 8.0 | 6.5 | 7.6 | 4.4 | 13.5 | 14.1 | 8.7 |
+| RANSAC | Deform Std | 4.6 | 1.3 | 4.7 | 4.6 | 4.4 | 5.0 | 2.9 | - |
+
+![Comparison Plot](doc/comparison_plot.png)
+
+**PointNet++ outperforms RANSAC significantly:**
+- Rigid objects: 0.7mm vs 7.5mm MAE (10x better)
+- Deformable objects: 6.6mm vs 8.7mm MAE
+
 ---
 
 ## Model Architecture (PointNet++)
