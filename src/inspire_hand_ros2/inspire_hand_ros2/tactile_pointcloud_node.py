@@ -187,12 +187,13 @@ class TactilePointCloudNode(Node):
 
             # Convert to angle_actual format (radians to raw value)
             # This is inverse of kinematics_solver.angle_actual_to_radians
-            # Uses per-joint limits and zero offsets
+            # Uses per-joint limits and zero offsets from DOF_RAW_CALIBRATION
             for dof_idx, joint_name in self.kinematics_solver.DOF_TO_JOINT.items():
                 if joint_name in joint_angles:
                     radians = joint_angles[joint_name]
                     upper_limit = self.kinematics_solver.DOF_JOINT_LIMITS.get(dof_idx, np.pi / 2.0)
-                    zero_offset = self.kinematics_solver.DOF_ZERO_OFFSET.get(dof_idx, 1000)
+                    # DOF_RAW_CALIBRATION[dof_idx] = (raw_at_zero_rad, raw_at_upper_limit_rad)
+                    zero_offset = self.kinematics_solver.DOF_RAW_CALIBRATION.get(dof_idx, (1000, 0))[0]
                     angle_actual = int(zero_offset - (radians / upper_limit) * zero_offset)
                     self.latest_joint_angles[dof_idx] = angle_actual
 
