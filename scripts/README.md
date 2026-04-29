@@ -167,6 +167,22 @@ Binary PCD v0.7 format with fields:
 ## Sample Data
 
 ### Deformable (Empty/Soft Objects)
+
+#### Tennis Ball (Empty) - 365 samples
+**Example: `record_tenis_ball_empty_1/sample_0010`**
+
+| Camera RGB | Tactile Colormap |
+|-----------|------------------|
+| ![Camera](../training_data/deformable/record_tenis_ball_empty_1/sample_0010/camera_rgb.png) | ![Tactile](../training_data/deformable/record_tenis_ball_empty_1/sample_0010/tactile_colormap.png) |
+
+#### Orange Ball (Empty) - 555 samples
+**Example: `record_orange_ball_empty_10/sample_0010`**
+
+| Camera RGB | Tactile Colormap |
+|-----------|------------------|
+| ![Camera](../training_data/deformable/record_orange_ball_empty_10/sample_0010/camera_rgb.png) | ![Tactile](../training_data/deformable/record_orange_ball_empty_10/sample_0010/tactile_colormap.png) |
+
+#### Cylinder 250mm (Empty)
 **Example: `record_250_empty_10/sample_0005`**
 
 | Camera RGB | Tactile Colormap |
@@ -174,6 +190,22 @@ Binary PCD v0.7 format with fields:
 | ![Camera](../training_data/deformable/record_250_empty_10/sample_0005/camera_rgb.png) | ![Tactile](../training_data/deformable/record_250_empty_10/sample_0005/tactile_colormap.png) |
 
 ### Non-Deformable (Rigid/Filled Objects)
+
+#### Tennis Ball (Rigid) - 532 samples
+**Example: `record_tenis_ball_10/sample_0010`**
+
+| Camera RGB | Tactile Colormap |
+|-----------|------------------|
+| ![Camera](../training_data/non_deformable/record_tenis_ball_10/sample_0010/camera_rgb.png) | ![Tactile](../training_data/non_deformable/record_tenis_ball_10/sample_0010/tactile_colormap.png) |
+
+#### White Ball (Rigid) - 590 samples
+**Example: `record_white_ball_10/sample_0010`**
+
+| Camera RGB | Tactile Colormap |
+|-----------|------------------|
+| ![Camera](../training_data/non_deformable/record_white_ball_10/sample_0010/camera_rgb.png) | ![Tactile](../training_data/non_deformable/record_white_ball_10/sample_0010/tactile_colormap.png) |
+
+#### Cylinder 250mm (Rigid)
 **Example: `record_250_12/sample_0000`**
 
 | Camera RGB | Tactile Colormap |
@@ -182,11 +214,17 @@ Binary PCD v0.7 format with fields:
 
 **View more samples:**
 ```bash
-./scripts/visualize_sample.py training_data/deformable/record_250_empty_10/sample_0000
+# Deformable balls
+./scripts/visualize_sample.py training_data/deformable/record_tenis_ball_empty_1/sample_0010
+./scripts/visualize_sample.py training_data/deformable/record_orange_ball_empty_10/sample_0010
+
+# Non-deformable balls
+./scripts/visualize_sample.py training_data/non_deformable/record_tenis_ball_10/sample_0010
+./scripts/visualize_sample.py training_data/non_deformable/record_white_ball_10/sample_0010
+
+# Cylinders
 ./scripts/visualize_sample.py training_data/deformable/record_250_empty_10/sample_0005
-./scripts/visualize_sample.py training_data/deformable/record_250_empty_10/sample_0010
 ./scripts/visualize_sample.py training_data/non_deformable/record_250_12/sample_0000
-./scripts/visualize_sample.py training_data/non_deformable/record_250_12/sample_0002
 ```
 
 ## Requirements
@@ -204,5 +242,15 @@ Binary PCD v0.7 format with fields:
 | Total Bags | 198 |
 | Dataset Size | 11.08 GB |
 | Sample Interval | 0.081s (~30 samples per bag) |
+
+### Ball Object Statistics
+
+| Object Type | Category | Bags | Samples |
+|-------------|----------|------|---------|
+| Tennis Ball (empty) | Deformable | 9 | 365 |
+| Orange Ball (empty) | Deformable | 13 | 555 |
+| Tennis Ball (rigid) | Non-Deformable | 13 | 532 |
+| White Ball (rigid) | Non-Deformable | 13 | 590 |
+| **Ball Total** | | **48** | **2,042** |
 
 **Note:** All modalities are complete except `camera_pointcloud.pcd`, which is missing from 306 samples (5.0%) due to sparse depth camera recording in source bags. See `training_data/README.md` for affected bags.
