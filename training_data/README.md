@@ -23,6 +23,35 @@ Multi-modal training dataset for AI-based grasp analysis, collected from the RH5
 - **Deformable**: Empty/soft objects (bags with `_empty` in filename)
 - **Non-deformable**: Filled/rigid objects (all other bags)
 
+## Object Radii
+
+Ground truth radii for all grasped objects in the dataset.
+
+### Cylinders
+
+| Object Name | Radius (mm) |
+|-------------|-------------|
+| 250 | 24.0 |
+| 330_fat | 33.0 |
+| 330_slim | 29.0 |
+| 500 | 33.0 |
+
+### Bottles
+
+| Object Name | Radius (mm) |
+|-------------|-------------|
+| small_bottle | 32.5 |
+| mid_bottle | 39.5 |
+| big_bottle | 46.0 |
+
+### Balls
+
+| Object Name | Diameter (mm) | Radius (mm) |
+|-------------|---------------|-------------|
+| tenis_ball | 64.0 | 32.0 |
+| orange_ball | 58.8 | 29.4 |
+| white_ball | 77.0 | 38.5 |
+
 ## Data Modalities
 
 ### 1. Camera RGB (`camera_rgb.png`)

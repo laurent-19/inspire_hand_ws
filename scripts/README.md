@@ -18,6 +18,23 @@ The pipeline records ROS2 bag files during grasping operations, then extracts sy
 
 Bags are automatically classified as **deformable** (empty/soft objects) or **non-deformable** (filled/rigid objects) based on filename.
 
+## Object Radii
+
+Ground truth radii for all grasped objects.
+
+| Object | Radius (mm) | Notes |
+|--------|-------------|-------|
+| 250 | 24.0 | Cylinder |
+| 330_fat | 33.0 | Cylinder |
+| 330_slim | 29.0 | Cylinder |
+| 500 | 33.0 | Cylinder |
+| small_bottle | 32.5 | |
+| mid_bottle | 39.5 | |
+| big_bottle | 46.0 | |
+| tenis_ball | 32.0 | 64mm diameter |
+| orange_ball | 29.4 | 58.8mm diameter |
+| white_ball | 38.5 | 77mm diameter |
+
 ## Scripts
 
 ### `record.sh`
