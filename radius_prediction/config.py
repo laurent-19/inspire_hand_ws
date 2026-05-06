@@ -11,13 +11,18 @@ CHECKPOINT_DIR = ROOT_DIR / "radius_prediction" / "checkpoints"
 
 # Object name to radius mapping (in mm)
 OBJECT_TO_RADIUS = {
-    "250": 24.0,           #
-    "330_fat": 33.0,       #
-    "330_slim": 29.0,      #
-    "500": 33.0,           #
+    # Cylinders
+    "250": 24.0,
+    "330_fat": 33.0,
+    "330_slim": 29.0,
+    "500": 33.0,
     "small_bottle": 32.5,
     "mid_bottle": 39.5,
     "big_bottle": 46.0,
+    # Balls
+    "tenis_ball": 32.0,
+    "orange_ball": 29.4,
+    "white_ball": 38.5,
 }
 
 # All object names

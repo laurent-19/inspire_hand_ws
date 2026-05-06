@@ -124,6 +124,24 @@ python -m radius_prediction.evaluate_all --table_only
 - Rigid objects: 0.7mm vs 7.5mm MAE (10x better)
 - Deformable objects: 6.6mm vs 8.7mm MAE
 
+### Generalization to Balls Dataset
+
+Evaluation on spherical objects (model trained only on cylinders):
+
+| Class | Type | n | GT (mm) | Mean (mm) | Std (mm) | MAE (mm) |
+|-------|------|---|---------|-----------|----------|----------|
+| Tennis ball | non_deformable | 448 | 32.0 | 31.4 | 1.3 | 1.0 |
+| White ball | non_deformable | 498 | 38.5 | 32.6 | 1.7 | 5.9 |
+| Orange ball (empty) | deformable | 467 | 29.4 | 26.7 | 2.7 | 3.4 |
+| Tennis ball (empty) | deformable | 273 | 32.0 | 32.2 | 3.1 | 2.4 |
+| **OVERALL** | **non_deformable** | **946** | - | - | - | **3.6** |
+| **OVERALL** | **deformable** | **740** | - | - | - | **3.1** |
+
+**Observations:**
+- Tennis ball (rigid): 1.0mm MAE - good generalization from cylinder training
+- White ball (38.5mm): 5.9mm MAE - model underpredicts larger spheres
+- Deformable balls: 3.1mm MAE - better than deformable cylinders (6.6mm), likely due to balls maintaining shape better under compression
+
 ---
 
 ## Model Architecture (PointNet++)
